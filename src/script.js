@@ -96,6 +96,15 @@ oninput="calcularLinha(${id})">
 <option ${material === 'Membrana Líquida' ? 'selected' : ''}>Membrana Líquida</option>
 <option ${material === 'Poliuretano' ? 'selected' : ''}>Poliuretano</option>
 <option ${material === 'Sistema Icobit' ? 'selected' : ''}>Icobit</option>
+<option ${material === 'Membrana Cimenticia' ? 'selected' : ''}>Membrana Cimenticia</option>
+<option ${material === 'Membrana Cimenticia com Prot UV' ? 'selected' : ''}>Membrana Cimenticia com Prot UV</option>
+<option ${material === 'Regularização Substrato' ? 'selected' : ''}>Regularização Substrato</option>
+<option ${material === 'Proteção Mecanica' ? 'selected' : ''}>Proteção Mecanica</option>
+<option ${material === 'Membrana Acrilica com Prot UV' ? 'selected' : ''}>Membrana Acrilica com Prot UV</option>
+<option ${material === 'Cintamento Perimetral' ? 'selected' : ''}>Cintamento Perimetral</option>
+<option ${material === 'Cristalização' ? 'selected' : ''}>Cristalização</option>
+<option ${material === 'Tamponamento' ? 'selected' : ''}>Tamponamento</option>
+
 </select>
 </td>
 
@@ -508,7 +517,7 @@ function gerarPDF() {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7);
     doc.setTextColor(200, 210, 225);
-    doc.text('IMPERMEABILIZAÇÕES & REVESTIMENTOS', ML, 22);
+    doc.text('IMPERMEABILIZAÇÕES', ML, 22);
 
     // Número do orçamento (direita)
     doc.setFont('helvetica', 'normal');
