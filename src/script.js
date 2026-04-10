@@ -185,30 +185,40 @@ function toggleDesconto() {
 
 function aplicarDesconto() {
     const pct = parseFloat(document.getElementById('input-desconto').value);
-    if (isNaN(pct) || pct <= 0 || pct >= 100) { mostrarToast('Informe um percentual entre 0 e 100.', 'erro'); return; }
-    let subtotal = 0;
-    document.querySelectorAll('#linhas-tbody tr').forEach(tr => {
-        const inputs = tr.querySelectorAll('input[type=number]');
-        const qtd = parseFloat(inputs[0].value) || 0;
-        const unit = parseFloat(inputs[1].value) || 0;
-        subtotal += qtd * unit;
-    });
+
+    if (isNaN(pct) || pct <= 0 || pct >= 100) {
+        mostrarToast('Informe um percentual entre 0 e 100.', 'erro');
+        return;
+    }
+
+    // pegar totais corretos
+    const totais = calcularTotais();
+
+    const subtotalMaterial = totais.subtotalMaterial;
+    const subtotalMao = totais.subtotalMaoObra;
+    const totalGeral = totais.totalGeral;
+
     descontoAplicado = pct;
-    const descValor = subtotal * pct / 100;
-    const comDesc = subtotal - descValor;
+
+    const descValor = totalGeral * pct / 100;
+    const comDesc = totalGeral - descValor;
+
     const cartoes = document.getElementById('desc-cartoes');
+
     cartoes.innerHTML = `
     <div class="desc-cartao" style="background:#2563a8">
       <span class="dc-label">Total com ${pct}% desconto</span>
       <span class="dc-valor">${formatarMoeda(comDesc)}</span>
       <span class="dc-economia">Economia de ${formatarMoeda(descValor)}</span>
     </div>
+
     <div class="desc-cartao" style="background:#e05c20">
       <span class="dc-label">Valor do desconto</span>
       <span class="dc-valor">${formatarMoeda(descValor)}</span>
-      <span class="dc-economia">Sobre ${formatarMoeda(subtotal)}</span>
+      <span class="dc-economia">Sobre ${formatarMoeda(totalGeral)}</span>
     </div>
-  `;
+    `;
+
     document.getElementById('resultados-desconto').classList.add('visivel');
 }
 
