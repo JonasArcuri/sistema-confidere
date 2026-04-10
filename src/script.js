@@ -55,11 +55,23 @@ ${[
             'BWC(s)',
             'Lavabo(s)',
             'Sacada(s)',
+            'Caixa d Água',
+            'Cisterna',
+            'Terraço(s)',
+            'Janelas Etapa 1',
+            'Janelas Etapa 2',
             'Piscina',
-            'Terraço',
-            'Laje',
-            'Calha',
-            'Reservatório',
+            'Piscina Infantil(s)',
+            'Piscina Cobertura 1',
+            'Piscina Cobertura 2',
+            'Piscina Giardinho 1',
+            'Piscina Giardinho 2',
+            'Rampa Mezanino',
+            'Teto Cisterna',
+            'Teto Caixa Da Água',
+            'Laje Caixa Da Água',
+            'Muro Contenção',
+            'Floreira(s)',
             'Outro'
         ].map(v => `<option ${v === desc ? 'selected' : ''}>${v}</option>`).join('')}
 </select>
@@ -76,10 +88,14 @@ oninput="calcularLinha(${id})">
 <td class="col-material">
 <select onchange="calcularLinha(${id})">
 <option value="">Selecione</option>
-<option ${material === 'Manta Asfáltica' ? 'selected' : ''}>Manta Asfáltica</option>
+<option ${material === 'Manta Asfáltica 4mm Anti Raiz' ? 'selected' : ''}>Manta Asfáltica 4mm Anti Raiz</option>
+<option ${material === 'Manta Asfáltica 3mm Aluminizada' ? 'selected' : ''}>Manta Asfáltica 3mm Aluminizada</option>
+<option ${material === 'Manta Asfáltica 4mm TIPO 3 PP' ? 'selected' : ''}>Manta Asfáltica 4mm TIPO 3 PP</option>
+<option ${material === 'Manta Asfáltica 4mm TIPO 3 AA' ? 'selected' : ''}>Manta Asfáltica 4mm TIPO 3 AA</option>
+<option ${material === 'Manta Asfáltica 3mm PP' ? 'selected' : ''}>Manta Asfáltica 3mm PP</option>
 <option ${material === 'Membrana Líquida' ? 'selected' : ''}>Membrana Líquida</option>
 <option ${material === 'Poliuretano' ? 'selected' : ''}>Poliuretano</option>
-<option ${material === 'Cristalizante' ? 'selected' : ''}>Cristalizante</option>
+<option ${material === 'Sistema Icobit' ? 'selected' : ''}>Icobit</option>
 </select>
 </td>
 
