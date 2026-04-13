@@ -2,6 +2,7 @@
 let linhaId = 0;
 let orcamentoEditandoId = null;
 let descontoAplicado = 0;
+let logoBase64 = null; // logo em base64 para persistência e PDF
 
 // ===== INICIALIZAÇÃO =====
 document.addEventListener('DOMContentLoaded', () => {
@@ -14,7 +15,82 @@ document.addEventListener('DOMContentLoaded', () => {
     adicionarLinha();
     renderizarHistorico();
     atualizarNumeroDisplay();
+    // Restaurar logo salva na sessão
+    carregarLogoSalva();
 });
+
+// ===== LOGO =====
+function carregarLogoSalva() {
+    const saved = localStorage.getItem('confidere_logo');
+    if (saved) {
+        logoBase64 = saved;
+        aplicarLogoNaTela(saved);
+    }
+}
+
+function carregarLogo(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const maxSize = 2 * 1024 * 1024; // 2MB
+    if (file.size > maxSize) {
+        mostrarToast('Imagem muito grande. Use até 2MB.', 'erro');
+        return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const b64 = e.target.result;
+        logoBase64 = b64;
+        localStorage.setItem('confidere_logo', b64);
+        aplicarLogoNaTela(b64);
+        mostrarToast('Logotipo carregado!', 'sucesso');
+    };
+    reader.readAsDataURL(file);
+    // Limpar input para permitir recarregar o mesmo arquivo
+    event.target.value = '';
+}
+
+function aplicarLogoNaTela(src) {
+    // Nav
+    const navImg = document.getElementById('nav-logo-img');
+    const navTexto = document.getElementById('nav-logo-texto');
+    const navArea = document.querySelector('.nav-logo-area');
+    navImg.src = src;
+    navImg.style.display = 'block';
+    navTexto.style.display = 'none';
+    navArea.classList.add('com-logo');
+    document.getElementById('btn-remover-logo').style.display = 'flex';
+
+    // Header do orçamento
+    const headerImg = document.getElementById('header-logo-img');
+    const headerTexto = document.getElementById('header-logo-texto');
+    headerImg.src = src;
+    headerImg.style.display = 'block';
+    headerTexto.style.display = 'none';
+}
+
+function removerLogo() {
+    logoBase64 = null;
+    localStorage.removeItem('confidere_logo');
+
+    // Nav
+    const navImg = document.getElementById('nav-logo-img');
+    const navTexto = document.getElementById('nav-logo-texto');
+    const navArea = document.querySelector('.nav-logo-area');
+    navImg.src = '';
+    navImg.style.display = 'none';
+    navTexto.style.display = '';
+    navArea.classList.remove('com-logo');
+    document.getElementById('btn-remover-logo').style.display = 'none';
+
+    // Header
+    const headerImg = document.getElementById('header-logo-img');
+    const headerTexto = document.getElementById('header-logo-texto');
+    headerImg.src = '';
+    headerImg.style.display = 'none';
+    headerTexto.style.display = '';
+
+    mostrarToast('Logotipo removido.', '');
+}
 
 // ===== ABAS =====
 function mudarAba(aba, btn) {
@@ -45,44 +121,30 @@ function adicionarLinha(desc = '', area = '', material = '', custoMaterial = '',
     const id = linhaId;
     const tbody = document.getElementById('linhas-tbody');
     const tr = document.createElement('tr');
-
     tr.dataset.id = id;
+
+    // Calcular subtotais iniciais se valores existirem
+    const areaNum = parseFloat(area) || 0;
+    const matNum = parseFloat(custoMaterial) || 0;
+    const maoNum = parseFloat(custoMao) || 0;
+    const initSubMat = areaNum * matNum;
+    const initSubMao = areaNum * maoNum;
 
     tr.innerHTML = `
 <td class="col-desc">
 <select onchange="calcularLinha(${id})">
 ${[
-            'BWC(s)',
-            'Lavabo(s)',
-            'Sacada(s)',
-            'Caixa d Água',
-            'Cisterna',
-            'Terraço(s)',
-            'Janelas Etapa 1',
-            'Janelas Etapa 2',
-            'Piscina',
-            'Piscina Infantil(s)',
-            'Piscina Cobertura 1',
-            'Piscina Cobertura 2',
-            'Piscina Giardinho 1',
-            'Piscina Giardinho 2',
-            'Rampa Mezanino',
-            'Teto Cisterna',
-            'Teto Caixa Da Água',
-            'Laje Caixa Da Água',
-            'Muro Contenção',
-            'Floreira(s)',
-            'Outro'
-        ].map(v => `<option ${v === desc ? 'selected' : ''}>${v}</option>`).join('')}
+        'BWC(s)', 'Lavabo(s)', 'Sacada(s)', 'Caixa d Água', 'Cisterna', 'Terraço(s)',
+        'Janelas Etapa 1', 'Janelas Etapa 2', 'Piscina', 'Piscina Infantil(s)',
+        'Piscina Cobertura 1', 'Piscina Cobertura 2', 'Piscina Giardinho 1', 'Piscina Giardinho 2',
+        'Rampa Mezanino', 'Teto Cisterna', 'Teto Caixa Da Água', 'Laje Caixa Da Água',
+        'Muro Contenção', 'Floreira(s)', 'Outro'
+    ].map(v => `<option ${v === desc ? 'selected' : ''}>${v}</option>`).join('')}
 </select>
 </td>
 
 <td class="col-area">
-<input type="number"
-placeholder="Área m²"
-step="0.01"
-value="${area}"
-oninput="calcularLinha(${id})">
+<input type="number" placeholder="Área m²" step="0.01" value="${area}" oninput="calcularLinha(${id})">
 </td>
 
 <td class="col-material">
@@ -104,24 +166,23 @@ oninput="calcularLinha(${id})">
 <option ${material === 'Cintamento Perimetral' ? 'selected' : ''}>Cintamento Perimetral</option>
 <option ${material === 'Cristalização' ? 'selected' : ''}>Cristalização</option>
 <option ${material === 'Tamponamento' ? 'selected' : ''}>Tamponamento</option>
-
 </select>
 </td>
 
 <td class="col-qtd">
-<input type="number"
-placeholder="Material m²"
-step="0.01"
-value="${custoMaterial}"
-oninput="calcularLinha(${id})">
+<input type="number" placeholder="Material m²" step="0.01" value="${custoMaterial}" oninput="calcularLinha(${id})">
 </td>
 
 <td class="col-unit">
-<input type="number"
-placeholder="Mão obra m²"
-step="0.01"
-value="${custoMao}"
-oninput="calcularLinha(${id})">
+<input type="number" placeholder="Mão obra m²" step="0.01" value="${custoMao}" oninput="calcularLinha(${id})">
+</td>
+
+<td class="col-subtmat">
+<span id="submat-${id}" class="subtot-mat${initSubMat > 0 ? ' ativo' : ''}">${formatarMoeda(initSubMat)}</span>
+</td>
+
+<td class="col-subtmao">
+<span id="submao-${id}" class="subtot-mao${initSubMao > 0 ? ' ativo' : ''}">${formatarMoeda(initSubMao)}</span>
 </td>
 
 <td class="col-total">
@@ -147,19 +208,28 @@ function calcularLinha(id) {
     if (!tr) return;
 
     const inputs = tr.querySelectorAll('input[type=number]');
-
     const area = parseFloat(inputs[0].value) || 0;
     const custoMaterial = parseFloat(inputs[1].value) || 0;
     const custoMaoObra = parseFloat(inputs[2]?.value || 0) || 0;
 
-    // cálculos separados
     const subtotalMaterial = area * custoMaterial;
     const subtotalMaoObra = area * custoMaoObra;
-
     const total = subtotalMaterial + subtotalMaoObra;
 
-    tr.querySelector(`#total-${id}`).textContent = formatarMoeda(total);
+    // Atualizar subtotais em tempo real na linha
+    const elSubMat = tr.querySelector(`#submat-${id}`);
+    const elSubMao = tr.querySelector(`#submao-${id}`);
 
+    if (elSubMat) {
+        elSubMat.textContent = formatarMoeda(subtotalMaterial);
+        elSubMat.classList.toggle('ativo', subtotalMaterial > 0);
+    }
+    if (elSubMao) {
+        elSubMao.textContent = formatarMoeda(subtotalMaoObra);
+        elSubMao.classList.toggle('ativo', subtotalMaoObra > 0);
+    }
+
+    tr.querySelector(`#total-${id}`).textContent = formatarMoeda(total);
     calcularTotais();
 }
 
@@ -170,79 +240,53 @@ function calcularTotais() {
 
     document.querySelectorAll('#linhas-tbody tr').forEach(tr => {
         const inputs = tr.querySelectorAll('input[type=number]');
-
         const area = parseFloat(inputs[0].value) || 0;
         const material = parseFloat(inputs[1].value) || 0;
         const maoObra = parseFloat(inputs[2]?.value || 0) || 0;
 
         const subMat = area * material;
         const subMao = area * maoObra;
-
         subtotalMaterial += subMat;
         subtotalMaoObra += subMao;
         totalGeral += subMat + subMao;
     });
 
-    // MOSTRAR NA TELA
-    document.getElementById('disp-subtotal-material').textContent =
-        formatarMoeda(subtotalMaterial);
-
-    document.getElementById('disp-subtotal-mao').textContent =
-        formatarMoeda(subtotalMaoObra);
-
-    document.getElementById('disp-total').textContent =
-        formatarMoeda(totalGeral);
-
+    document.getElementById('disp-subtotal-material').textContent = formatarMoeda(subtotalMaterial);
+    document.getElementById('disp-subtotal-mao').textContent = formatarMoeda(subtotalMaoObra);
+    document.getElementById('disp-total').textContent = formatarMoeda(totalGeral);
     limparDescontoCalculo();
 
-    return {
-        subtotalMaterial,
-        subtotalMaoObra,
-        totalGeral
-    };
+    return { subtotalMaterial, subtotalMaoObra, totalGeral };
 }
 
 // ===== DESCONTO =====
 function toggleDesconto() {
-    const form = document.getElementById('form-desconto');
-    form.classList.toggle('visivel');
+    document.getElementById('form-desconto').classList.toggle('visivel');
 }
 
 function aplicarDesconto() {
     const pct = parseFloat(document.getElementById('input-desconto').value);
-
     if (isNaN(pct) || pct <= 0 || pct >= 100) {
         mostrarToast('Informe um percentual entre 0 e 100.', 'erro');
         return;
     }
-
-    // pegar totais corretos
     const totais = calcularTotais();
-
-    const subtotalMaterial = totais.subtotalMaterial;
-    const subtotalMao = totais.subtotalMaoObra;
     const totalGeral = totais.totalGeral;
-
     descontoAplicado = pct;
-
     const descValor = totalGeral * pct / 100;
     const comDesc = totalGeral - descValor;
 
-    const cartoes = document.getElementById('desc-cartoes');
-
-    cartoes.innerHTML = `
+    document.getElementById('desc-cartoes').innerHTML = `
     <div class="desc-cartao" style="background:#2563a8">
       <span class="dc-label">Total com ${pct}% desconto</span>
       <span class="dc-valor">${formatarMoeda(comDesc)}</span>
       <span class="dc-economia">Economia de ${formatarMoeda(descValor)}</span>
     </div>
-
     <div class="desc-cartao" style="background:#e05c20">
       <span class="dc-label">Valor do desconto</span>
       <span class="dc-valor">${formatarMoeda(descValor)}</span>
       <span class="dc-economia">Sobre ${formatarMoeda(totalGeral)}</span>
-    </div>
-    `;
+    </div>`;
 
     document.getElementById('resultados-desconto').classList.add('visivel');
 }
@@ -268,21 +312,10 @@ function coletarDados() {
         const material = tr.children[2].querySelector('select').value;
         const custoMaterial = parseFloat(tr.children[3].querySelector('input').value) || 0;
         const custoMao = parseFloat(tr.children[4].querySelector('input').value) || 0;
-
         const subtotalMaterial = area * custoMaterial;
         const subtotalMao = area * custoMao;
         const total = subtotalMaterial + subtotalMao;
-
-        linhas.push({
-            desc,
-            area,
-            material,
-            custoMaterial,
-            custoMao,
-            subtotalMaterial,
-            subtotalMao,
-            total
-        });
+        linhas.push({ desc, area, material, custoMaterial, custoMao, subtotalMaterial, subtotalMao, total });
     });
 
     const subtotal = linhas.reduce((a, l) => a + l.total, 0);
@@ -379,16 +412,7 @@ function editarOrcamento(id) {
     document.getElementById('campo-obs').value = orc.obs || '';
     document.getElementById('linhas-tbody').innerHTML = '';
     linhaId = 0;
-    (orc.linhas || []).forEach(l =>
-        adicionarLinha(
-            l.desc,
-            l.area,
-            l.material,
-            l.custoMaterial,
-            l.custoMao,
-            l.total
-        )
-    );
+    (orc.linhas || []).forEach(l => adicionarLinha(l.desc, l.area, l.material, l.custoMaterial, l.custoMao, l.total));
     descontoAplicado = orc.desconto || 0;
     limparDescontoCalculo();
     calcularTotais();
@@ -455,7 +479,7 @@ function renderItemHistorico(o) {
     </div>`;
 }
 
-// ===== PDF — gerado programaticamente com jsPDF (sem html2canvas) =====
+// ===== PDF — gerado programaticamente com jsPDF =====
 function gerarPDF() {
     if (typeof window.jspdf === 'undefined' && typeof jsPDF === 'undefined') {
         mostrarToast('Biblioteca PDF não carregada. Recarregue a página.', 'erro');
@@ -470,7 +494,6 @@ function gerarPDF() {
 
     mostrarToast('Gerando PDF...', '');
 
-    // Suporte a ambos os modos de importação da lib
     const { jsPDF: JsPDF } = window.jspdf || {};
     const Doc = JsPDF || jsPDF;
     const doc = new Doc({ unit: 'mm', format: 'a4', orientation: 'portrait' });
@@ -479,13 +502,11 @@ function gerarPDF() {
     const dataFmt = dados.data ? new Date(dados.data + 'T12:00:00').toLocaleDateString('pt-BR') : '—';
     const validFmt = dados.validade ? new Date(dados.validade + 'T12:00:00').toLocaleDateString('pt-BR') : '—';
 
-    // Dimensões da página
-    const PW = 210; // largura A4 mm
-    const ML = 14;  // margem esquerda
-    const MR = 14;  // margem direita
-    const CW = PW - ML - MR; // largura útil
+    const PW = 210;
+    const ML = 14;
+    const MR = 14;
+    const CW = PW - ML - MR;
 
-    // Cores
     const C_AZUL_ESC = [26, 58, 92];
     const C_AZUL_MED = [37, 99, 168];
     const C_AZUL_CLA = [74, 144, 217];
@@ -497,27 +518,51 @@ function gerarPDF() {
     const C_BORDA = [216, 212, 204];
     const C_ZEBRA = [245, 247, 250];
 
-    let y = 0; // cursor vertical
+    let y = 0;
 
     // ── CABEÇALHO ──────────────────────────────────────────────────
     const HEADER_H = 28;
     doc.setFillColor(...C_AZUL_ESC);
     doc.rect(0, 0, PW, HEADER_H, 'F');
 
-    // Logo "CONFIDERE"
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(22);
-    doc.setTextColor(...C_BRANCO);
-    doc.text('CONFI', ML, 16);
-    const confidW = doc.getTextWidth('CONFI');
-    doc.setTextColor(...C_AZUL_CLA);
-    doc.text('DERE', ML + confidW, 16);
-
-    // Subtítulo
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7);
-    doc.setTextColor(200, 210, 225);
-    doc.text('IMPERMEABILIZAÇÕES', ML, 22);
+    // Logo PNG se carregada, senão texto
+    if (logoBase64) {
+        try {
+            // Detectar formato
+            const fmt = logoBase64.startsWith('data:image/png') ? 'PNG'
+                : logoBase64.startsWith('data:image/svg') ? 'SVG'
+                : 'JPEG';
+            // Dimensões proporcionais (max 40x18mm)
+            const logoW = 40;
+            const logoH = 18;
+            doc.addImage(logoBase64, fmt === 'SVG' ? 'PNG' : fmt, ML, 5, logoW, logoH, undefined, 'FAST');
+        } catch (e) {
+            // Fallback para texto se imagem falhar
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(22);
+            doc.setTextColor(...C_BRANCO);
+            doc.text('CONFI', ML, 16);
+            const confidW = doc.getTextWidth('CONFI');
+            doc.setTextColor(...C_AZUL_CLA);
+            doc.text('DERE', ML + confidW, 16);
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(7);
+            doc.setTextColor(200, 210, 225);
+            doc.text('IMPERMEABILIZAÇÕES', ML, 22);
+        }
+    } else {
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(22);
+        doc.setTextColor(...C_BRANCO);
+        doc.text('CONFI', ML, 16);
+        const confidW = doc.getTextWidth('CONFI');
+        doc.setTextColor(...C_AZUL_CLA);
+        doc.text('DERE', ML + confidW, 16);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7);
+        doc.setTextColor(200, 210, 225);
+        doc.text('IMPERMEABILIZAÇÕES', ML, 22);
+    }
 
     // Número do orçamento (direita)
     doc.setFont('helvetica', 'normal');
@@ -557,35 +602,31 @@ function gerarPDF() {
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(9.5);
         doc.setTextColor(...C_TEXTO);
-        const maxW = colW - 4;
-        const truncated = truncarTexto(doc, c.val, maxW);
-        doc.text(truncated, cx, cy + 5);
+        doc.text(truncarTexto(doc, c.val, colW - 4), cx, cy + 5);
     });
 
     y += INFO_H + 4;
 
     // ── TABELA DE ITENS ───────────────────────────────────────────
-    // Cabeçalho da tabela
     const COL_DESC = 40;
     const COL_UNID = 16;
-    const COL_MAT = 28;
+    const COL_MAT  = 28;
     const COL_CMAT = 16;
-    const COL_CMO = 20;
+    const COL_CMO  = 20;
     const COL_TMAT = 30;
     const COL_TMAO = 30;
-    const ROW_H = 8;
+    const ROW_H    = 8;
 
     const cols = [
-        { label: 'Descrição', w: COL_DESC, align: 'left' },
-        { label: 'Área m²', w: COL_UNID, align: 'center' },
-        { label: 'Material', w: COL_MAT, align: 'left' },
-        { label: 'Custo Material', w: COL_CMAT, align: 'right' },
-        { label: 'Mão de Obra', w: COL_CMO, align: 'right' },
-        { label: 'Total Material', w: COL_TMAT, align: 'right' },
-        { label: 'Total Mão Obra', w: COL_TMAO, align: 'right' },
+        { label: 'Descrição',     w: COL_DESC, align: 'left' },
+        { label: 'Área m²',       w: COL_UNID, align: 'center' },
+        { label: 'Material',      w: COL_MAT,  align: 'left' },
+        { label: 'Custo Mat.',    w: COL_CMAT, align: 'right' },
+        { label: 'Mão de Obra',   w: COL_CMO,  align: 'right' },
+        { label: 'Total Material',w: COL_TMAT, align: 'right' },
+        { label: 'Total M.Obra',  w: COL_TMAO, align: 'right' },
     ];
 
-    // Fundo cabeçalho tabela
     doc.setFillColor(...C_AZUL_ESC);
     doc.rect(ML, y, CW, ROW_H, 'F');
 
@@ -596,14 +637,13 @@ function gerarPDF() {
         doc.setTextColor(...C_BRANCO);
         const tx = col.align === 'right' ? cx + col.w - 2
             : col.align === 'center' ? cx + col.w / 2
-                : cx + 2;
+            : cx + 2;
         doc.text(col.label, tx, y + 5.5, { align: col.align });
         cx += col.w;
     });
 
     y += ROW_H;
 
-    // Linhas de dados
     const linhasFiltradas = dados.linhas.filter(l => l.desc || l.total > 0);
 
     if (linhasFiltradas.length === 0) {
@@ -616,17 +656,12 @@ function gerarPDF() {
         y += ROW_H;
     } else {
         linhasFiltradas.forEach((l, i) => {
-            // Verifica quebra de página
-            if (y + ROW_H > 270) {
-                doc.addPage();
-                y = 14;
-            }
+            if (y + ROW_H > 270) { doc.addPage(); y = 14; }
 
             const bg = i % 2 === 0 ? C_ZEBRA : C_BRANCO;
             doc.setFillColor(...bg);
             doc.rect(ML, y, CW, ROW_H, 'F');
 
-            // Borda inferior suave
             doc.setDrawColor(...C_BORDA);
             doc.setLineWidth(0.2);
             doc.line(ML, y + ROW_H, ML + CW, y + ROW_H);
@@ -637,76 +672,39 @@ function gerarPDF() {
 
             let ccx = ML;
 
-            // DESCRIÇÃO
+            // Descrição
             const descricao = `${l.desc || '-'} - ${l.area || 0} m²`;
-            doc.text(
-                truncarTexto(doc, descricao, COL_DESC - 4),
-                ccx + 2,
-                y + 5.5
-            );
+            doc.text(truncarTexto(doc, descricao, COL_DESC - 4), ccx + 2, y + 5.5);
             ccx += COL_DESC;
 
-            // ÁREA m²
-            doc.text(
-                String(l.area || 0),
-                ccx + COL_UNID / 2,
-                y + 5.5,
-                { align: 'center' }
-            );
+            // Área m²
+            doc.text(String(l.area || 0), ccx + COL_UNID / 2, y + 5.5, { align: 'center' });
             ccx += COL_UNID;
 
-            // MATERIAL
-            doc.text(
-                truncarTexto(doc, l.material || '-', COL_MAT - 4),
-                ccx + 2,
-                y + 5.5
-            );
+            // Material
+            doc.text(truncarTexto(doc, l.material || '-', COL_MAT - 4), ccx + 2, y + 5.5);
             ccx += COL_MAT;
 
-            // CUSTO MATERIAL
-            doc.text(
-                formatarMoeda(l.custoMaterial || 0),
-                ccx + COL_CMAT - 2,
-                y + 5.5,
-                { align: 'right' }
-            );
+            // Custo Material
+            doc.text(formatarMoeda(l.custoMaterial || 0), ccx + COL_CMAT - 2, y + 5.5, { align: 'right' });
             ccx += COL_CMAT;
 
-            // MÃO DE OBRA
-            doc.text(
-                formatarMoeda(l.custoMao || 0),
-                ccx + COL_CMO - 2,
-                y + 5.5,
-                { align: 'right' }
-            );
+            // Mão de Obra
+            doc.text(formatarMoeda(l.custoMao || 0), ccx + COL_CMO - 2, y + 5.5, { align: 'right' });
             ccx += COL_CMO;
 
-            // TOTAL MATERIAL
+            // Total Material
             doc.setFont('helvetica', 'bold');
             doc.setTextColor(...C_AZUL_ESC);
-
-            doc.text(
-                formatarMoeda(l.subtotalMaterial),
-                ccx + COL_TMAT - 2,
-                y + 5.5,
-                { align: 'right' }
-            );
-
+            doc.text(formatarMoeda(l.subtotalMaterial), ccx + COL_TMAT - 2, y + 5.5, { align: 'right' });
             ccx += COL_TMAT;
 
-            // TOTAL MÃO OBRA
-            doc.text(
-                formatarMoeda(l.subtotalMao),
-                ccx + COL_TMAO - 2,
-                y + 5.5,
-                { align: 'right' }
-            );
+            // Total Mão Obra
+            doc.text(formatarMoeda(l.subtotalMao), ccx + COL_TMAO - 2, y + 5.5, { align: 'right' });
 
-            // Reset
             doc.setFont('helvetica', 'normal');
             doc.setTextColor(...C_TEXTO);
 
-            // Se material existe, aumentar a altura da linha ligeiramente
             y += l.material ? ROW_H + 2 : ROW_H;
         });
     }
@@ -718,55 +716,25 @@ function gerarPDF() {
     y += 1;
 
     const totais = calcularTotais();
-
     const subtotalMaterial = totais.subtotalMaterial;
     const subtotalMao = totais.subtotalMaoObra;
     const totalGeral = totais.totalGeral;
 
-
     // Subtotal Material
     if (y + 7 > 270) { doc.addPage(); y = 14; }
-
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
     doc.setTextColor(...C_CINZA);
-
-    doc.text(
-        'Subtotal Material',
-        ML + CW - COL_TMAO - 30,
-        y + 6,
-        { align: 'right' }
-    );
-
+    doc.text('Subtotal Material', ML + CW - COL_TMAO - 30, y + 6, { align: 'right' });
     doc.setTextColor(...C_TEXTO);
-    doc.text(
-        formatarMoeda(subtotalMaterial),
-        ML + CW - 2,
-        y + 6,
-        { align: 'right' }
-    );
-
+    doc.text(formatarMoeda(subtotalMaterial), ML + CW - 2, y + 6, { align: 'right' });
     y += 6;
-
 
     // Subtotal Mão de Obra
     doc.setTextColor(...C_CINZA);
-
-    doc.text(
-        'Subtotal Mão de Obra',
-        ML + CW - COL_TMAO - 30,
-        y + 6,
-        { align: 'right' }
-    );
-
+    doc.text('Subtotal Mão de Obra', ML + CW - COL_TMAO - 30, y + 6, { align: 'right' });
     doc.setTextColor(...C_TEXTO);
-    doc.text(
-        formatarMoeda(subtotalMao),
-        ML + CW - 2,
-        y + 6,
-        { align: 'right' }
-    );
-
+    doc.text(formatarMoeda(subtotalMao), ML + CW - 2, y + 6, { align: 'right' });
     y += 8;
 
     // Desconto (se houver)
@@ -796,17 +764,12 @@ function gerarPDF() {
     // ── OBSERVAÇÕES ───────────────────────────────────────────────
     if (dados.obs && dados.obs.trim()) {
         if (y + 16 > 270) { doc.addPage(); y = 14; }
-
-        // Caixa de obs
         const obsLinhas = doc.splitTextToSize(dados.obs.trim(), CW - 8);
         const obsH = Math.max(16, obsLinhas.length * 5 + 12);
 
         doc.setFillColor(...C_AZUL_FADE);
         doc.setDrawColor(...C_AZUL_MED);
         doc.setLineWidth(0.8);
-
-        // borda esquerda destaque
-        doc.setFillColor(...C_AZUL_FADE);
         doc.rect(ML, y, CW, obsH, 'F');
         doc.setFillColor(...C_AZUL_MED);
         doc.rect(ML, y, 3, obsH, 'F');
@@ -820,13 +783,11 @@ function gerarPDF() {
         doc.setFontSize(8.5);
         doc.setTextColor(68, 68, 68);
         doc.text(obsLinhas, ML + 6, y + 12);
-
         y += obsH + 6;
     }
 
     // ── RODAPÉ ────────────────────────────────────────────────────
     if (y + 10 > 275) { doc.addPage(); y = 14; }
-
     doc.setDrawColor(...C_BORDA);
     doc.setLineWidth(0.3);
     doc.line(ML, y, ML + CW, y);
@@ -838,7 +799,6 @@ function gerarPDF() {
     doc.text('Confidere Impermeabilizações', ML, y);
     doc.text(`Orçamento válido até ${validFmt}`, ML + CW, y, { align: 'right' });
 
-    // ── SALVAR ────────────────────────────────────────────────────
     const nomeArq = `Orcamento_${numDisplay.replace('#', '')}_${(dados.cliente || 'cliente').replace(/\s+/g, '_')}.pdf`;
     doc.save(nomeArq);
     mostrarToast('PDF gerado com sucesso!', 'sucesso');
@@ -849,9 +809,7 @@ function truncarTexto(doc, texto, maxW) {
     if (!texto) return '';
     if (doc.getTextWidth(texto) <= maxW) return texto;
     let t = texto;
-    while (t.length > 1 && doc.getTextWidth(t + '…') > maxW) {
-        t = t.slice(0, -1);
-    }
+    while (t.length > 1 && doc.getTextWidth(t + '…') > maxW) { t = t.slice(0, -1); }
     return t + '…';
 }
 

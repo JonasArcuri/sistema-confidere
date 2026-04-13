@@ -1042,3 +1042,127 @@ table tbody td select:focus {
     min-width: 100px;
   }
 }
+/* ===== LOGO UPLOAD ===== */
+.nav-logo-area {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.nav-logo-img {
+  height: 38px;
+  max-width: 140px;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+.header-logo-img {
+  max-height: 64px;
+  max-width: 200px;
+  object-fit: contain;
+  border-radius: 6px;
+  filter: brightness(1.05);
+}
+
+.btn-logo-upload {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(255,255,255,0.1);
+  border: 1px dashed rgba(255,255,255,0.35);
+  color: rgba(255,255,255,0.7);
+  padding: 5px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.btn-logo-upload:hover {
+  background: rgba(255,255,255,0.18);
+  border-color: rgba(255,255,255,0.6);
+  color: #fff;
+}
+
+.btn-logo-remover {
+  background: none;
+  border: 1px solid rgba(255,255,255,0.25);
+  color: rgba(255,255,255,0.55);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 15px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: all 0.15s;
+}
+
+.btn-logo-remover:hover {
+  background: rgba(224,92,32,0.3);
+  border-color: var(--laranja);
+  color: #fff;
+}
+
+/* Quando logo está ativa — ocultar texto nav */
+.nav-logo-area.com-logo .logo-nav {
+  display: none;
+}
+
+/* ===== COLUNAS SUBTOTAL NA TABELA ===== */
+.col-subtmat,
+.col-subtmao {
+  width: 90px;
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.col-subtmat {
+  /* color: var(--azul-meio); */
+}
+
+.col-subtmao {
+  color: white;
+}
+
+/* Células de subtotal em tempo real */
+td .subtot-mat {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  /* color: var(--azul-meio); */
+  font-weight: 500;
+}
+
+td .subtot-mao {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  color: #1a1814;
+  font-weight: 500;
+}
+
+/* Destaque quando valor > 0 */
+td .subtot-mat.ativo,
+td .subtot-mao.ativo {
+  background: var(--azul-fade);
+  border-radius: 4px;
+  padding: 2px 5px;
+}
+
+td .subtot-mao.ativo {
+  background: #eaf4e8;
+}
+
+@media (max-width: 768px) {
+  .col-subtmat,
+  .col-subtmao {
+    width: 75px;
+  }
+}

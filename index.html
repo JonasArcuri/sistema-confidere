@@ -15,7 +15,22 @@
 <body>
 
   <nav>
-    <div class="logo-nav">CONFI<span>DERE</span></div>
+    <div class="nav-logo-area">
+      <!-- Logo imagem (se carregada) -->
+      <img id="nav-logo-img" src="" alt="Logo" class="nav-logo-img" style="display:none">
+      <div class="logo-nav" id="nav-logo-texto">CONFI<span>DERE</span></div>
+      <!-- Botão upload de logo -->
+      <label class="btn-logo-upload" title="Carregar logotipo (.png)">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/>
+          <line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+        Logo
+        <input type="file" id="input-logo" accept="image/png,image/jpeg,image/svg+xml" style="display:none" onchange="carregarLogo(event)">
+      </label>
+      <button class="btn-logo-remover" id="btn-remover-logo" onclick="removerLogo()" title="Remover logo" style="display:none">×</button>
+    </div>
     <div class="nav-tabs">
       <button class="nav-tab ativo" onclick="mudarAba('orcamento', this)">Novo Orçamento</button>
       <button class="nav-tab" onclick="mudarAba('historico', this)">Histórico</button>
@@ -32,8 +47,12 @@
         <!-- HEADER -->
         <div class="orca-header">
           <div class="logo-bloco">
-            <div class="logo-grande">CONFI<span>DERE</span></div>
-            <div class="logo-sub">Impermeabilizações</div>
+            <!-- Logo imagem no header do orçamento -->
+            <img id="header-logo-img" src="" alt="Logo" class="header-logo-img" style="display:none">
+            <div id="header-logo-texto">
+              <div class="logo-grande">CONFI<span>DERE</span></div>
+              <div class="logo-sub">Impermeabilizações</div>
+            </div>
           </div>
           <div class="orca-num-bloco">
             <div class="orca-num-label">Orçamento</div>
@@ -71,33 +90,13 @@
               <label>Estado</label>
               <select id="campo-estado">
                 <option value="">Selecione o estado...</option>
-                <option>AC</option>
-                <option>AL</option>
-                <option>AP</option>
-                <option>AM</option>
-                <option>BA</option>
-                <option>CE</option>
-                <option>DF</option>
-                <option>ES</option>
-                <option>GO</option>
-                <option>MA</option>
-                <option>MT</option>
-                <option>MS</option>
-                <option>MG</option>
-                <option>PA</option>
-                <option>PB</option>
-                <option>PR</option>
-                <option>PE</option>
-                <option>PI</option>
-                <option>RJ</option>
-                <option>RN</option>
-                <option>RS</option>
-                <option>RO</option>
-                <option>RR</option>
-                <option>SC</option>
-                <option>SP</option>
-                <option>SE</option>
-                <option>TO</option>
+                <option>AC</option><option>AL</option><option>AP</option><option>AM</option>
+                <option>BA</option><option>CE</option><option>DF</option><option>ES</option>
+                <option>GO</option><option>MA</option><option>MT</option><option>MS</option>
+                <option>MG</option><option>PA</option><option>PB</option><option>PR</option>
+                <option>PE</option><option>PI</option><option>RJ</option><option>RN</option>
+                <option>RS</option><option>RO</option><option>RR</option><option selected>SC</option>
+                <option>SP</option><option>SE</option><option>TO</option>
               </select>
             </div>
             <div class="campo">
@@ -121,8 +120,10 @@
                   <th class="col-desc">Descrição do Serviço</th>
                   <th class="col-area">Área (m²)</th>
                   <th class="col-material">Material</th>
-                  <th class="col-qtd">Custo Material m²</th>
-                  <th class="col-unit">Mão de Obra m²</th>
+                  <th class="col-qtd">Custo Mat. m²</th>
+                  <th class="col-unit">Mão Obra m²</th>
+                  <th class="col-subtmat">Total Material</th>
+                  <th class="col-subtmao">Total M.O.</th>
                   <th class="col-total">Total (R$)</th>
                   <th class="col-acao"></th>
                 </tr>
@@ -141,7 +142,6 @@
             <span class="label">Subtotal Material</span>
             <span class="valor" id="disp-subtotal-material">R$ 0,00</span>
           </div>
-
           <div class="totais-linha">
             <span class="label">Subtotal Mão de Obra</span>
             <span class="valor" id="disp-subtotal-mao">R$ 0,00</span>
@@ -183,25 +183,25 @@
         <div class="acoes-finais">
           <button class="btn-laranja" onclick="gerarPDF()">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-              <polyline points="14,2 14,8 20,8" />
-              <line x1="12" y1="18" x2="12" y2="12" />
-              <line x1="9" y1="15" x2="15" y2="15" />
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14,2 14,8 20,8"/>
+              <line x1="12" y1="18" x2="12" y2="12"/>
+              <line x1="9" y1="15" x2="15" y2="15"/>
             </svg>
             GERAR PDF
           </button>
           <button class="btn-primario" onclick="salvarOrcamento()">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
-              <polyline points="17,21 17,13 7,13 7,21" />
-              <polyline points="7,3 7,8 15,8" />
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+              <polyline points="17,21 17,13 7,13 7,21"/>
+              <polyline points="7,3 7,8 15,8"/>
             </svg>
             Salvar Orçamento
           </button>
           <button class="btn-secundario" onclick="novoOrcamento()">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <line x1="5" y1="12" x2="19" y2="12" />
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
             </svg>
             Novo
           </button>
