@@ -524,19 +524,131 @@
 }
 
 @media (max-width: 768px) {
-  .cal-celula {
-    min-height: 60px;
-    padding: 4px;
+  .gestao-wrapper {
+    margin: 1rem auto;
+    padding: 0 0.75rem;
   }
-  .cal-evento {
-    font-size: 9px;
+
+  .gestao-sub-nav {
+    gap: 4px;
+    padding: 5px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap;
+    scrollbar-width: none;
   }
+
+  .gestao-sub-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .gestao-sub-tab {
+    padding: 9px 14px;
+    font-size: 13px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .cal-topo {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .cal-nav {
+    width: 100%;
+    justify-content: space-between;
+  }
+
   #cal-mes-label {
-    min-width: 140px;
+    min-width: 0;
+    flex: 1;
+    text-align: center;
     font-size: 1.3rem;
   }
+
+  .btn-hoje {
+    align-self: flex-start;
+  }
+
+  .cal-celula {
+    min-height: 62px;
+    padding: 4px;
+  }
+
+  .cal-evento {
+    font-size: 9px;
+    padding: 2px 4px;
+  }
+
   .func-lista {
     grid-template-columns: 1fr;
+  }
+
+  .func-topo {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .func-topo button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .func-card-acoes {
+    flex-wrap: wrap;
+  }
+
+  .func-card-acoes .btn-mini {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .rel-topo {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .rel-acoes-topo {
+    width: 100%;
+  }
+
+  .rel-acoes-topo button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .rel-filtros {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .rel-filtros .campo {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .rel-filtros .btn-secundario {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .rel-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .rel-card-valor {
+    text-align: left;
+  }
+
+  .rel-card-acoes {
+    flex-wrap: wrap;
+  }
+
+  .rel-card-acoes .btn-mini {
+    flex: 1;
+    justify-content: center;
   }
 }
 
@@ -544,18 +656,48 @@
   .cal-grid {
     gap: 2px;
   }
-  .cal-celula {
-    min-height: 44px;
-    padding: 3px;
+
+  .cal-card {
+    padding: 0.75rem 0.5rem;
   }
+
+  .cal-celula {
+    min-height: 48px;
+    padding: 3px;
+    border-radius: 5px;
+  }
+
   .cal-dia-semana {
     font-size: 9px;
     padding: 4px 2px;
   }
+
   .cal-num {
     font-size: 11px;
   }
+
   .cal-evento {
     display: none;
+  }
+
+  .cal-legenda {
+    gap: 0.75rem;
+  }
+
+  .cal-legenda-item {
+    font-size: 11px;
+  }
+
+  .modal-gestao {
+    padding: 1.5rem 1.2rem;
+  }
+
+  .salario-grupo {
+    flex-direction: column;
+  }
+
+  .salario-grupo select {
+    flex: unset;
+    width: 100%;
   }
 }
