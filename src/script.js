@@ -99,6 +99,10 @@ function mudarAba(aba, btn) {
     document.getElementById('aba-' + aba).classList.add('ativo');
     btn.classList.add('ativo');
     if (aba === 'historico') renderizarHistorico();
+    if (aba === 'gestao') {
+        renderizarCalendario();
+        popularSelectFuncionariosRel();
+    }
 }
 
 // ===== NUMERO DO ORCAMENTO =====
