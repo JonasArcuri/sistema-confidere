@@ -1,8 +1,10 @@
 // ===== ESTADO =====
+import { DB } from './firebase.js';
+
 let linhaId = 0;
 let orcamentoEditandoId = null;
 let descontoAplicado = 0;
-let logoBase64 = null; // logo em base64 para persistência e PDF
+let logoBase64 = null;
 
 // ===== INICIALIZAÇÃO =====
 document.addEventListener('DOMContentLoaded', () => {
@@ -13,77 +15,66 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('campo-validade').value = validade.toISOString().split('T')[0];
     adicionarLinha();
     adicionarLinha();
-    renderizarHistorico();
     atualizarNumeroDisplay();
-    // Restaurar logo salva na sessão
-    carregarLogoSalva();
 });
 
 // ===== LOGO =====
-function carregarLogoSalva() {
-    const saved = localStorage.getItem('confidere_logo');
-    if (saved) {
-        logoBase64 = saved;
-        aplicarLogoNaTela(saved);
-    }
-}
-
+// Logo agora é salva no Firestore (via DB.salvarLogo) em vez de localStorage
 function carregarLogo(event) {
     const file = event.target.files[0];
     if (!file) return;
-    const maxSize = 2 * 1024 * 1024; // 2MB
+    const maxSize = 2 * 1024 * 1024;
     if (file.size > maxSize) {
         mostrarToast('Imagem muito grande. Use até 2MB.', 'erro');
         return;
     }
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
         const b64 = e.target.result;
         logoBase64 = b64;
-        localStorage.setItem('confidere_logo', b64);
         aplicarLogoNaTela(b64);
-        mostrarToast('Logotipo carregado!', 'sucesso');
+        try {
+            await DB.salvarLogo(b64);
+            mostrarToast('Logotipo salvo!', 'sucesso');
+        } catch {
+            mostrarToast('Logo carregada (erro ao salvar no servidor).', 'erro');
+        }
     };
     reader.readAsDataURL(file);
-    // Limpar input para permitir recarregar o mesmo arquivo
     event.target.value = '';
 }
 
 function aplicarLogoNaTela(src) {
-    // Nav
-    const navImg = document.getElementById('nav-logo-img');
-    const navTexto = document.getElementById('nav-logo-texto');
-    const navArea = document.querySelector('.nav-logo-area');
+    const navImg    = document.getElementById('nav-logo-img');
+    const navTexto  = document.getElementById('nav-logo-texto');
+    const navArea   = document.querySelector('.nav-logo-area');
     navImg.src = src;
     navImg.style.display = 'block';
     navTexto.style.display = 'none';
     navArea.classList.add('com-logo');
     document.getElementById('btn-remover-logo').style.display = 'flex';
 
-    // Header do orçamento
-    const headerImg = document.getElementById('header-logo-img');
+    const headerImg   = document.getElementById('header-logo-img');
     const headerTexto = document.getElementById('header-logo-texto');
     headerImg.src = src;
     headerImg.style.display = 'block';
     headerTexto.style.display = 'none';
 }
 
-function removerLogo() {
+async function removerLogo() {
     logoBase64 = null;
-    localStorage.removeItem('confidere_logo');
+    try { await DB.removerLogo(); } catch { /* silencioso */ }
 
-    // Nav
-    const navImg = document.getElementById('nav-logo-img');
+    const navImg   = document.getElementById('nav-logo-img');
     const navTexto = document.getElementById('nav-logo-texto');
-    const navArea = document.querySelector('.nav-logo-area');
+    const navArea  = document.querySelector('.nav-logo-area');
     navImg.src = '';
     navImg.style.display = 'none';
     navTexto.style.display = '';
     navArea.classList.remove('com-logo');
     document.getElementById('btn-remover-logo').style.display = 'none';
 
-    // Header
-    const headerImg = document.getElementById('header-logo-img');
+    const headerImg   = document.getElementById('header-logo-img');
     const headerTexto = document.getElementById('header-logo-texto');
     headerImg.src = '';
     headerImg.style.display = 'none';
@@ -105,7 +96,7 @@ function mudarAba(aba, btn) {
     }
 }
 
-// ===== NUMERO DO ORCAMENTO =====
+// ===== NÚMERO DO ORÇAMENTO =====
 function proximoNumero() {
     const hist = getHistorico();
     const nums = hist.map(o => parseInt(o.numero)).filter(n => !isNaN(n));
@@ -114,7 +105,7 @@ function proximoNumero() {
 
 function atualizarNumeroDisplay() {
     const num = orcamentoEditandoId
-        ? getHistorico().find(o => o.id === orcamentoEditandoId)?.numero || proximoNumero()
+        ? (getHistorico().find(o => o.id === orcamentoEditandoId)?.numero || proximoNumero())
         : proximoNumero();
     document.getElementById('display-numero').textContent = '#' + String(num).padStart(3, '0');
 }
@@ -127,10 +118,9 @@ function adicionarLinha(desc = '', area = '', material = '', custoMaterial = '',
     const tr = document.createElement('tr');
     tr.dataset.id = id;
 
-    // Calcular subtotais iniciais se valores existirem
-    const areaNum = parseFloat(area) || 0;
-    const matNum = parseFloat(custoMaterial) || 0;
-    const maoNum = parseFloat(custoMao) || 0;
+    const areaNum  = parseFloat(area) || 0;
+    const matNum   = parseFloat(custoMaterial) || 0;
+    const maoNum   = parseFloat(custoMao) || 0;
     const initSubMat = areaNum * matNum;
     const initSubMao = areaNum * maoNum;
 
@@ -138,65 +128,45 @@ function adicionarLinha(desc = '', area = '', material = '', custoMaterial = '',
 <td class="col-desc">
 <select onchange="calcularLinha(${id})">
 ${[
-        'BWC(s)', 'Lavabo(s)', 'Sacada(s)', 'Caixa d Água', 'Cisterna', 'Terraço(s)',
-        'Janelas Etapa 1', 'Janelas Etapa 2', 'Piscina', 'Piscina Infantil(s)',
-        'Piscina Cobertura 1', 'Piscina Cobertura 2', 'Piscina Giardinho 1', 'Piscina Giardinho 2',
-        'Rampa Mezanino', 'Teto Cisterna', 'Teto Caixa Da Água', 'Laje Caixa Da Água',
-        'Muro Contenção', 'Floreira(s)', 'Outro'
-    ].map(v => `<option ${v === desc ? 'selected' : ''}>${v}</option>`).join('')}
+    'BWC(s)','Lavabo(s)','Sacada(s)','Caixa d Água','Cisterna','Terraço(s)',
+    'Janelas Etapa 1','Janelas Etapa 2','Piscina','Piscina Infantil(s)',
+    'Piscina Cobertura 1','Piscina Cobertura 2','Piscina Giardinho 1','Piscina Giardinho 2',
+    'Rampa Mezanino','Teto Cisterna','Teto Caixa Da Água','Laje Caixa Da Água',
+    'Muro Contenção','Floreira(s)','Outro'
+].map(v => `<option ${v === desc ? 'selected' : ''}>${v}</option>`).join('')}
 </select>
 </td>
-
 <td class="col-area">
 <input type="number" placeholder="Área m²" step="0.01" value="${area}" oninput="calcularLinha(${id})">
 </td>
-
 <td class="col-material">
 <select onchange="calcularLinha(${id})">
 <option value="">Selecione</option>
-<option ${material === 'Manta Asfáltica 4mm Anti Raiz' ? 'selected' : ''}>Manta Asfáltica 4mm Anti Raiz</option>
-<option ${material === 'Manta Asfáltica 3mm Aluminizada' ? 'selected' : ''}>Manta Asfáltica 3mm Aluminizada</option>
-<option ${material === 'Manta Asfáltica 4mm TIPO 3 PP' ? 'selected' : ''}>Manta Asfáltica 4mm TIPO 3 PP</option>
-<option ${material === 'Manta Asfáltica 4mm TIPO 3 AA' ? 'selected' : ''}>Manta Asfáltica 4mm TIPO 3 AA</option>
-<option ${material === 'Manta Asfáltica 3mm PP' ? 'selected' : ''}>Manta Asfáltica 3mm PP</option>
-<option ${material === 'Membrana Líquida' ? 'selected' : ''}>Membrana Líquida</option>
-<option ${material === 'Poliuretano' ? 'selected' : ''}>Poliuretano</option>
-<option ${material === 'Sistema Icobit' ? 'selected' : ''}>Icobit</option>
-<option ${material === 'Membrana Cimenticia' ? 'selected' : ''}>Membrana Cimenticia</option>
-<option ${material === 'Membrana Cimenticia com Prot UV' ? 'selected' : ''}>Membrana Cimenticia com Prot UV</option>
-<option ${material === 'Regularização Substrato' ? 'selected' : ''}>Regularização Substrato</option>
-<option ${material === 'Proteção Mecanica' ? 'selected' : ''}>Proteção Mecanica</option>
-<option ${material === 'Membrana Acrilica com Prot UV' ? 'selected' : ''}>Membrana Acrilica com Prot UV</option>
-<option ${material === 'Cintamento Perimetral' ? 'selected' : ''}>Cintamento Perimetral</option>
-<option ${material === 'Cristalização' ? 'selected' : ''}>Cristalização</option>
-<option ${material === 'Tamponamento' ? 'selected' : ''}>Tamponamento</option>
+${['Manta Asfáltica 4mm Anti Raiz','Manta Asfáltica 3mm Aluminizada','Manta Asfáltica 4mm TIPO 3 PP',
+   'Manta Asfáltica 4mm TIPO 3 AA','Manta Asfáltica 3mm PP','Membrana Líquida','Poliuretano',
+   'Sistema Icobit','Membrana Cimenticia','Membrana Cimenticia com Prot UV','Regularização Substrato',
+   'Proteção Mecanica','Membrana Acrilica com Prot UV','Cintamento Perimetral','Cristalização','Tamponamento'
+].map(v => `<option ${v === material ? 'selected' : ''}>${v}</option>`).join('')}
 </select>
 </td>
-
 <td class="col-qtd">
 <input type="number" placeholder="Material m²" step="0.01" value="${custoMaterial}" oninput="calcularLinha(${id})">
 </td>
-
 <td class="col-unit">
 <input type="number" placeholder="Mão obra m²" step="0.01" value="${custoMao}" oninput="calcularLinha(${id})">
 </td>
-
 <td class="col-subtmat">
 <span id="submat-${id}" class="subtot-mat${initSubMat > 0 ? ' ativo' : ''}">${formatarMoeda(initSubMat)}</span>
 </td>
-
 <td class="col-subtmao">
 <span id="submao-${id}" class="subtot-mao${initSubMao > 0 ? ' ativo' : ''}">${formatarMoeda(initSubMao)}</span>
 </td>
-
 <td class="col-total">
 <span id="total-${id}">${formatarMoeda(total)}</span>
 </td>
-
 <td class="col-acao">
 <button class="btn-remover" onclick="removerLinha(${id})">×</button>
-</td>
-`;
+</td>`;
 
     tbody.appendChild(tr);
 }
@@ -210,76 +180,50 @@ function removerLinha(id) {
 function calcularLinha(id) {
     const tr = document.querySelector(`tr[data-id="${id}"]`);
     if (!tr) return;
-
     const inputs = tr.querySelectorAll('input[type=number]');
-    const area = parseFloat(inputs[0].value) || 0;
-    const custoMaterial = parseFloat(inputs[1].value) || 0;
-    const custoMaoObra = parseFloat(inputs[2]?.value || 0) || 0;
+    const area       = parseFloat(inputs[0].value) || 0;
+    const custoMat   = parseFloat(inputs[1].value) || 0;
+    const custoMao   = parseFloat(inputs[2]?.value || 0) || 0;
+    const subMat = area * custoMat;
+    const subMao = area * custoMao;
+    const total  = subMat + subMao;
 
-    const subtotalMaterial = area * custoMaterial;
-    const subtotalMaoObra = area * custoMaoObra;
-    const total = subtotalMaterial + subtotalMaoObra;
-
-    // Atualizar subtotais em tempo real na linha
     const elSubMat = tr.querySelector(`#submat-${id}`);
     const elSubMao = tr.querySelector(`#submao-${id}`);
-
-    if (elSubMat) {
-        elSubMat.textContent = formatarMoeda(subtotalMaterial);
-        elSubMat.classList.toggle('ativo', subtotalMaterial > 0);
-    }
-    if (elSubMao) {
-        elSubMao.textContent = formatarMoeda(subtotalMaoObra);
-        elSubMao.classList.toggle('ativo', subtotalMaoObra > 0);
-    }
-
+    if (elSubMat) { elSubMat.textContent = formatarMoeda(subMat); elSubMat.classList.toggle('ativo', subMat > 0); }
+    if (elSubMao) { elSubMao.textContent = formatarMoeda(subMao); elSubMao.classList.toggle('ativo', subMao > 0); }
     tr.querySelector(`#total-${id}`).textContent = formatarMoeda(total);
     calcularTotais();
 }
 
 function calcularTotais() {
-    let subtotalMaterial = 0;
-    let subtotalMaoObra = 0;
-    let totalGeral = 0;
-
+    let subtotalMaterial = 0, subtotalMaoObra = 0, totalGeral = 0;
     document.querySelectorAll('#linhas-tbody tr').forEach(tr => {
         const inputs = tr.querySelectorAll('input[type=number]');
-        const area = parseFloat(inputs[0].value) || 0;
+        const area     = parseFloat(inputs[0].value) || 0;
         const material = parseFloat(inputs[1].value) || 0;
-        const maoObra = parseFloat(inputs[2]?.value || 0) || 0;
-
-        const subMat = area * material;
-        const subMao = area * maoObra;
-        subtotalMaterial += subMat;
-        subtotalMaoObra += subMao;
-        totalGeral += subMat + subMao;
+        const maoObra  = parseFloat(inputs[2]?.value || 0) || 0;
+        subtotalMaterial += area * material;
+        subtotalMaoObra  += area * maoObra;
+        totalGeral       += area * material + area * maoObra;
     });
-
     document.getElementById('disp-subtotal-material').textContent = formatarMoeda(subtotalMaterial);
-    document.getElementById('disp-subtotal-mao').textContent = formatarMoeda(subtotalMaoObra);
-    document.getElementById('disp-total').textContent = formatarMoeda(totalGeral);
+    document.getElementById('disp-subtotal-mao').textContent      = formatarMoeda(subtotalMaoObra);
+    document.getElementById('disp-total').textContent             = formatarMoeda(totalGeral);
     limparDescontoCalculo();
-
     return { subtotalMaterial, subtotalMaoObra, totalGeral };
 }
 
 // ===== DESCONTO =====
-function toggleDesconto() {
-    document.getElementById('form-desconto').classList.toggle('visivel');
-}
+function toggleDesconto() { document.getElementById('form-desconto').classList.toggle('visivel'); }
 
 function aplicarDesconto() {
     const pct = parseFloat(document.getElementById('input-desconto').value);
-    if (isNaN(pct) || pct <= 0 || pct >= 100) {
-        mostrarToast('Informe um percentual entre 0 e 100.', 'erro');
-        return;
-    }
-    const totais = calcularTotais();
-    const totalGeral = totais.totalGeral;
+    if (isNaN(pct) || pct <= 0 || pct >= 100) { mostrarToast('Informe um percentual entre 0 e 100.', 'erro'); return; }
+    const { totalGeral } = calcularTotais();
     descontoAplicado = pct;
     const descValor = totalGeral * pct / 100;
     const comDesc = totalGeral - descValor;
-
     document.getElementById('desc-cartoes').innerHTML = `
     <div class="desc-cartao" style="background:#2563a8">
       <span class="dc-label">Total com ${pct}% desconto</span>
@@ -291,7 +235,6 @@ function aplicarDesconto() {
       <span class="dc-valor">${formatarMoeda(descValor)}</span>
       <span class="dc-economia">Sobre ${formatarMoeda(totalGeral)}</span>
     </div>`;
-
     document.getElementById('resultados-desconto').classList.add('visivel');
 }
 
@@ -321,59 +264,72 @@ function coletarDados() {
         const total = subtotalMaterial + subtotalMao;
         linhas.push({ desc, area, material, custoMaterial, custoMao, subtotalMaterial, subtotalMao, total });
     });
-
     const subtotal = linhas.reduce((a, l) => a + l.total, 0);
     return {
-        cliente: document.getElementById('campo-cliente').value,
-        obra: document.getElementById('campo-obra').value,
+        cliente:  document.getElementById('campo-cliente').value,
+        obra:     document.getElementById('campo-obra').value,
         endereco: document.getElementById('campo-endereco').value,
-        estado: document.getElementById('campo-estado').value,
-        data: document.getElementById('campo-data').value,
+        estado:   document.getElementById('campo-estado').value,
+        data:     document.getElementById('campo-data').value,
         validade: document.getElementById('campo-validade').value,
-        obs: document.getElementById('campo-obs').value,
+        obs:      document.getElementById('campo-obs').value,
         linhas, subtotal,
         desconto: descontoAplicado,
         totalComDesconto: descontoAplicado ? subtotal * (1 - descontoAplicado / 100) : subtotal
     };
 }
 
-// ===== SALVAR =====
+// ===== HISTÓRICO — usa Firestore via window._orcamentosFirestore =====
 function getHistorico() {
-    try { return JSON.parse(localStorage.getItem('confidere_historico') || '[]'); } catch { return []; }
+    return window._orcamentosFirestore || [];
 }
-function setHistorico(h) { localStorage.setItem('confidere_historico', JSON.stringify(h)); }
 
-function salvarOrcamento() {
+function setHistorico(lista) {
+    window._orcamentosFirestore = lista;
+}
+
+// ===== SALVAR ORÇAMENTO =====
+async function salvarOrcamento() {
     const dados = coletarDados();
     if (!dados.cliente) { mostrarToast('Informe o nome do cliente.', 'erro'); return; }
-    const hist = getHistorico();
 
-    if (orcamentoEditandoId) {
-        const idx = hist.findIndex(o => o.id === orcamentoEditandoId);
-        if (idx !== -1) {
-            const atual = hist[idx];
-            const revBase = atual.revisoes ? atual.revisoes.length + 1 : 1;
-            if (!atual.revisoes) atual.revisoes = [];
-            atual.revisoes.push({ ...atual, revisoes: undefined, savedAt: atual.savedAt });
-            const revLabel = 'REV ' + numeroRomano(revBase);
-            hist[idx] = { ...dados, id: orcamentoEditandoId, numero: atual.numero, savedAt: new Date().toISOString(), revisao: revLabel, revisoes: atual.revisoes };
+    try {
+        if (orcamentoEditandoId) {
+            const hist = getHistorico();
+            const atual = hist.find(o => o.id === orcamentoEditandoId);
+            if (atual) {
+                const revBase = (atual.revisoes || []).length + 1;
+                if (!atual.revisoes) atual.revisoes = [];
+                atual.revisoes.push({ ...atual, revisoes: undefined, savedAt: atual.savedAt });
+                const revLabel = 'REV ' + numeroRomano(revBase);
+                const updated = { ...dados, numero: atual.numero, savedAt: new Date().toISOString(), revisao: revLabel, revisoes: atual.revisoes };
+                await DB.salvarOrcamento(updated, orcamentoEditandoId);
+                const idx = hist.findIndex(o => o.id === orcamentoEditandoId);
+                if (idx >= 0) hist[idx] = { id: orcamentoEditandoId, ...updated };
+                setHistorico(hist);
+            }
+        } else {
+            const num = proximoNumero();
+            const novoOrc = { ...dados, numero: num, savedAt: new Date().toISOString(), revisao: null, revisoes: [] };
+            const newId = await DB.salvarOrcamento(novoOrc);
+            const hist = getHistorico();
+            hist.push({ id: newId, ...novoOrc });
+            setHistorico(hist);
         }
-    } else {
-        const num = proximoNumero();
-        hist.push({ ...dados, id: Date.now(), numero: num, savedAt: new Date().toISOString(), revisao: null, revisoes: [] });
+        mostrarToast('Orçamento salvo com sucesso!', 'sucesso');
+        orcamentoEditandoId = null;
+        document.getElementById('display-rev').innerHTML = '';
+        atualizarNumeroDisplay();
+    } catch (err) {
+        console.error(err);
+        mostrarToast('Erro ao salvar orçamento.', 'erro');
     }
-
-    setHistorico(hist);
-    mostrarToast('Orçamento salvo com sucesso!', 'sucesso');
-    orcamentoEditandoId = null;
-    document.getElementById('display-rev').innerHTML = '';
-    atualizarNumeroDisplay();
 }
 
 function numeroRomano(n) {
-    const romanos = [['X', 10], ['IX', 9], ['V', 5], ['IV', 4], ['I', 1]];
+    const romanos = [['X',10],['IX',9],['V',5],['IV',4],['I',1]];
     let res = '';
-    for (const [r, v] of romanos) { while (n >= v) { res += r; n -= v; } }
+    for (const [r,v] of romanos) { while (n >= v) { res += r; n -= v; } }
     return res;
 }
 
@@ -403,17 +359,16 @@ function novoOrcamento() {
 
 // ===== EDITAR =====
 function editarOrcamento(id) {
-    const hist = getHistorico();
-    const orc = hist.find(o => o.id === id);
+    const orc = getHistorico().find(o => o.id === id);
     if (!orc) return;
     orcamentoEditandoId = id;
-    document.getElementById('campo-cliente').value = orc.cliente || '';
-    document.getElementById('campo-obra').value = orc.obra || '';
+    document.getElementById('campo-cliente').value  = orc.cliente  || '';
+    document.getElementById('campo-obra').value     = orc.obra     || '';
     document.getElementById('campo-endereco').value = orc.endereco || '';
-    document.getElementById('campo-estado').value = orc.estado || '';
-    document.getElementById('campo-data').value = orc.data || '';
+    document.getElementById('campo-estado').value   = orc.estado   || '';
+    document.getElementById('campo-data').value     = orc.data     || '';
     document.getElementById('campo-validade').value = orc.validade || '';
-    document.getElementById('campo-obs').value = orc.obs || '';
+    document.getElementById('campo-obs').value      = orc.obs      || '';
     document.getElementById('linhas-tbody').innerHTML = '';
     linhaId = 0;
     (orc.linhas || []).forEach(l => adicionarLinha(l.desc, l.area, l.material, l.custoMaterial, l.custoMao, l.total));
@@ -431,15 +386,19 @@ function editarOrcamento(id) {
 
 // ===== EXCLUIR =====
 function confirmarExcluir(id) {
-    abrirModal('Excluir Orçamento', 'Esta ação é irreversível. Deseja excluir este orçamento?', () => {
-        const hist = getHistorico().filter(o => o.id !== id);
-        setHistorico(hist);
-        renderizarHistorico();
-        mostrarToast('Orçamento excluído.', 'erro');
+    abrirModal('Excluir Orçamento', 'Esta ação é irreversível. Deseja excluir este orçamento?', async () => {
+        try {
+            await DB.excluirOrcamento(id);
+            setHistorico(getHistorico().filter(o => o.id !== id));
+            renderizarHistorico();
+            mostrarToast('Orçamento excluído.', 'erro');
+        } catch {
+            mostrarToast('Erro ao excluir orçamento.', 'erro');
+        }
     });
 }
 
-// ===== HISTORICO =====
+// ===== HISTÓRICO =====
 let filtroBusca = '';
 
 function filtrarHistorico(v) {
@@ -461,360 +420,26 @@ function renderizarHistorico() {
 }
 
 function renderItemHistorico(o) {
-    const nRevs = (o.revisoes || []).length;
-    const dataFmt = o.data ? new Date(o.data + 'T12:00:00').toLocaleDateString('pt-BR') : '—';
+    const nRevs    = (o.revisoes || []).length;
+    const dataFmt  = o.data ? new Date(o.data + 'T12:00:00').toLocaleDateString('pt-BR') : '—';
     const savedFmt = o.savedAt ? new Date(o.savedAt).toLocaleDateString('pt-BR') : '';
-    const revBadge = o.revisao ? `<span class="hist-rev-badge">${o.revisao}</span>` : '';
+    const revBadge  = o.revisao  ? `<span class="hist-rev-badge">${o.revisao}</span>` : '';
     const nRevBadge = nRevs > 0 ? `<span class="hist-rev-badge" style="background:#6b6660">${nRevs} rev.</span>` : '';
     return `
     <div class="hist-item ${o.revisao ? 'rev' : ''}">
       <div class="hist-item-header">
         <div class="hist-item-info">
-          <div class="hist-item-num">#${String(o.numero).padStart(3, '0')} ${revBadge} ${nRevBadge}</div>
+          <div class="hist-item-num">#${String(o.numero).padStart(3,'0')} ${revBadge} ${nRevBadge}</div>
           <div class="hist-item-cliente">${o.cliente || '(sem nome)'}</div>
-          <div class="hist-item-meta">${o.obra || ''} ${o.estado ? '· ' + o.estado : ''} ${dataFmt ? '· ' + dataFmt : ''} ${savedFmt ? '· Salvo em ' + savedFmt : ''}</div>
+          <div class="hist-item-meta">${o.obra || ''} ${o.estado ? '· '+o.estado : ''} ${dataFmt ? '· '+dataFmt : ''} ${savedFmt ? '· Salvo em '+savedFmt : ''}</div>
         </div>
         <div class="hist-item-total">${formatarMoeda(o.totalComDesconto || o.subtotal || 0)}</div>
         <div class="hist-item-acoes">
-          <button class="btn-mini editar" onclick="editarOrcamento(${o.id})">✎ Editar</button>
-          <button class="btn-mini excluir" onclick="confirmarExcluir(${o.id})">× Excluir</button>
+          <button class="btn-mini editar" onclick="editarOrcamento('${o.id}')">✎ Editar</button>
+          <button class="btn-mini excluir" onclick="confirmarExcluir('${o.id}')">× Excluir</button>
         </div>
       </div>
     </div>`;
-}
-
-// ===== PDF — gerado programaticamente com jsPDF =====
-function gerarPDF() {
-    if (typeof window.jspdf === 'undefined' && typeof jsPDF === 'undefined') {
-        mostrarToast('Biblioteca PDF não carregada. Recarregue a página.', 'erro');
-        return;
-    }
-
-    const dados = coletarDados();
-    if (!dados.cliente) {
-        mostrarToast('Informe o nome do cliente antes de gerar o PDF.', 'erro');
-        return;
-    }
-
-    mostrarToast('Gerando PDF...', '');
-
-    const { jsPDF: JsPDF } = window.jspdf || {};
-    const Doc = JsPDF || jsPDF;
-    const doc = new Doc({ unit: 'mm', format: 'a4', orientation: 'portrait' });
-
-    const numDisplay = document.getElementById('display-numero').textContent;
-    const dataFmt = dados.data ? new Date(dados.data + 'T12:00:00').toLocaleDateString('pt-BR') : '—';
-    const validFmt = dados.validade ? new Date(dados.validade + 'T12:00:00').toLocaleDateString('pt-BR') : '—';
-
-    const PW = 210;
-    const ML = 14;
-    const MR = 14;
-    const CW = PW - ML - MR;
-
-    const C_AZUL_ESC = [26, 58, 92];
-    const C_AZUL_MED = [37, 99, 168];
-    const C_AZUL_CLA = [74, 144, 217];
-    const C_AZUL_FADE = [232, 240, 250];
-    const C_LARANJA = [224, 92, 32];
-    const C_BRANCO = [255, 255, 255];
-    const C_TEXTO = [26, 24, 20];
-    const C_CINZA = [107, 102, 96];
-    const C_BORDA = [216, 212, 204];
-    const C_ZEBRA = [245, 247, 250];
-
-    let y = 0;
-
-    // ── CABEÇALHO ──────────────────────────────────────────────────
-    const HEADER_H = 28;
-    doc.setFillColor(...C_AZUL_ESC);
-    doc.rect(0, 0, PW, HEADER_H, 'F');
-
-    // Logo PNG se carregada, senão texto
-    if (logoBase64) {
-        try {
-            // Detectar formato
-            const fmt = logoBase64.startsWith('data:image/png') ? 'PNG'
-                : logoBase64.startsWith('data:image/svg') ? 'SVG'
-                : 'JPEG';
-            // Dimensões proporcionais (max 40x18mm)
-            const logoW = 40;
-            const logoH = 18;
-            doc.addImage(logoBase64, fmt === 'SVG' ? 'PNG' : fmt, ML, 5, logoW, logoH, undefined, 'FAST');
-        } catch (e) {
-            // Fallback para texto se imagem falhar
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(22);
-            doc.setTextColor(...C_BRANCO);
-            doc.text('CONFI', ML, 16);
-            const confidW = doc.getTextWidth('CONFI');
-            doc.setTextColor(...C_AZUL_CLA);
-            doc.text('DERE', ML + confidW, 16);
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(7);
-            doc.setTextColor(200, 210, 225);
-            doc.text('IMPERMEABILIZAÇÕES', ML, 22);
-        }
-    } else {
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(22);
-        doc.setTextColor(...C_BRANCO);
-        doc.text('CONFI', ML, 16);
-        const confidW = doc.getTextWidth('CONFI');
-        doc.setTextColor(...C_AZUL_CLA);
-        doc.text('DERE', ML + confidW, 16);
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(7);
-        doc.setTextColor(200, 210, 225);
-        doc.text('IMPERMEABILIZAÇÕES', ML, 22);
-    }
-
-    // Número do orçamento (direita)
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    doc.setTextColor(180, 200, 220);
-    doc.text('ORÇAMENTO', PW - MR, 11, { align: 'right' });
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(18);
-    doc.setTextColor(...C_AZUL_CLA);
-    doc.text(numDisplay, PW - MR, 22, { align: 'right' });
-
-    y = HEADER_H;
-
-    // ── DADOS DO CLIENTE ──────────────────────────────────────────
-    const INFO_H = 26;
-    doc.setFillColor(...C_AZUL_FADE);
-    doc.rect(0, y, PW, INFO_H, 'F');
-
-    const campos = [
-        { label: 'CLIENTE', val: dados.cliente || '—' },
-        { label: 'TIPO DE OBRA', val: dados.obra || '—' },
-        { label: 'LOCAL', val: [dados.endereco, dados.estado].filter(Boolean).join(', ') || '—' },
-        { label: 'DATA', val: dataFmt },
-        { label: 'VÁLIDO ATÉ', val: validFmt },
-    ];
-
-    const colW = CW / 3;
-    campos.forEach((c, i) => {
-        const col = i % 3;
-        const row = Math.floor(i / 3);
-        const cx = ML + col * colW;
-        const cy = y + 7 + row * 11;
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(7);
-        doc.setTextColor(...C_AZUL_MED);
-        doc.text(c.label, cx, cy);
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(9.5);
-        doc.setTextColor(...C_TEXTO);
-        doc.text(truncarTexto(doc, c.val, colW - 4), cx, cy + 5);
-    });
-
-    y += INFO_H + 4;
-
-    // ── TABELA DE ITENS ───────────────────────────────────────────
-    const COL_DESC = 40;
-    const COL_UNID = 16;
-    const COL_MAT  = 28;
-    const COL_CMAT = 16;
-    const COL_CMO  = 20;
-    const COL_TMAT = 30;
-    const COL_TMAO = 30;
-    const ROW_H    = 8;
-
-    const cols = [
-        { label: 'Descrição',     w: COL_DESC, align: 'left' },
-        { label: 'Área m²',       w: COL_UNID, align: 'center' },
-        { label: 'Material',      w: COL_MAT,  align: 'left' },
-        { label: 'Custo Mat.',    w: COL_CMAT, align: 'right' },
-        { label: 'Mão de Obra',   w: COL_CMO,  align: 'right' },
-        { label: 'Total Material',w: COL_TMAT, align: 'right' },
-        { label: 'Total M.Obra',  w: COL_TMAO, align: 'right' },
-    ];
-
-    doc.setFillColor(...C_AZUL_ESC);
-    doc.rect(ML, y, CW, ROW_H, 'F');
-
-    let cx = ML;
-    cols.forEach(col => {
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(8);
-        doc.setTextColor(...C_BRANCO);
-        const tx = col.align === 'right' ? cx + col.w - 2
-            : col.align === 'center' ? cx + col.w / 2
-            : cx + 2;
-        doc.text(col.label, tx, y + 5.5, { align: col.align });
-        cx += col.w;
-    });
-
-    y += ROW_H;
-
-    const linhasFiltradas = dados.linhas.filter(l => l.desc || l.total > 0);
-
-    if (linhasFiltradas.length === 0) {
-        doc.setFillColor(...C_ZEBRA);
-        doc.rect(ML, y, CW, ROW_H, 'F');
-        doc.setFont('helvetica', 'italic');
-        doc.setFontSize(8);
-        doc.setTextColor(...C_CINZA);
-        doc.text('Nenhum item adicionado', ML + 2, y + 5.5);
-        y += ROW_H;
-    } else {
-        linhasFiltradas.forEach((l, i) => {
-            if (y + ROW_H > 270) { doc.addPage(); y = 14; }
-
-            const bg = i % 2 === 0 ? C_ZEBRA : C_BRANCO;
-            doc.setFillColor(...bg);
-            doc.rect(ML, y, CW, ROW_H, 'F');
-
-            doc.setDrawColor(...C_BORDA);
-            doc.setLineWidth(0.2);
-            doc.line(ML, y + ROW_H, ML + CW, y + ROW_H);
-
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(8);
-            doc.setTextColor(...C_TEXTO);
-
-            let ccx = ML;
-
-            // Descrição
-            const descricao = `${l.desc || '-'} - ${l.area || 0} m²`;
-            doc.text(truncarTexto(doc, descricao, COL_DESC - 4), ccx + 2, y + 5.5);
-            ccx += COL_DESC;
-
-            // Área m²
-            doc.text(String(l.area || 0), ccx + COL_UNID / 2, y + 5.5, { align: 'center' });
-            ccx += COL_UNID;
-
-            // Material
-            doc.text(truncarTexto(doc, l.material || '-', COL_MAT - 4), ccx + 2, y + 5.5);
-            ccx += COL_MAT;
-
-            // Custo Material
-            doc.text(formatarMoeda(l.custoMaterial || 0), ccx + COL_CMAT - 2, y + 5.5, { align: 'right' });
-            ccx += COL_CMAT;
-
-            // Mão de Obra
-            doc.text(formatarMoeda(l.custoMao || 0), ccx + COL_CMO - 2, y + 5.5, { align: 'right' });
-            ccx += COL_CMO;
-
-            // Total Material
-            doc.setFont('helvetica', 'bold');
-            doc.setTextColor(...C_AZUL_ESC);
-            doc.text(formatarMoeda(l.subtotalMaterial), ccx + COL_TMAT - 2, y + 5.5, { align: 'right' });
-            ccx += COL_TMAT;
-
-            // Total Mão Obra
-            doc.text(formatarMoeda(l.subtotalMao), ccx + COL_TMAO - 2, y + 5.5, { align: 'right' });
-
-            doc.setFont('helvetica', 'normal');
-            doc.setTextColor(...C_TEXTO);
-
-            y += l.material ? ROW_H + 2 : ROW_H;
-        });
-    }
-
-    // Linha separadora totais
-    doc.setDrawColor(...C_AZUL_ESC);
-    doc.setLineWidth(0.5);
-    doc.line(ML, y, ML + CW, y);
-    y += 1;
-
-    const totais = calcularTotais();
-    const subtotalMaterial = totais.subtotalMaterial;
-    const subtotalMao = totais.subtotalMaoObra;
-    const totalGeral = totais.totalGeral;
-
-    // Subtotal Material
-    if (y + 7 > 270) { doc.addPage(); y = 14; }
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-    doc.setTextColor(...C_CINZA);
-    doc.text('Subtotal Material', ML + CW - COL_TMAO - 30, y + 6, { align: 'right' });
-    doc.setTextColor(...C_TEXTO);
-    doc.text(formatarMoeda(subtotalMaterial), ML + CW - 2, y + 6, { align: 'right' });
-    y += 6;
-
-    // Subtotal Mão de Obra
-    doc.setTextColor(...C_CINZA);
-    doc.text('Subtotal Mão de Obra', ML + CW - COL_TMAO - 30, y + 6, { align: 'right' });
-    doc.setTextColor(...C_TEXTO);
-    doc.text(formatarMoeda(subtotalMao), ML + CW - 2, y + 6, { align: 'right' });
-    y += 8;
-
-    // Desconto (se houver)
-    if (dados.desconto) {
-        if (y + 7 > 270) { doc.addPage(); y = 14; }
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(9);
-        doc.setTextColor(...C_LARANJA);
-        doc.text(`Desconto (${dados.desconto}%)`, ML + CW - COL_TMAO - 30, y + 6, { align: 'right' });
-        doc.text(`- ${formatarMoeda(dados.subtotal * dados.desconto / 100)}`, ML + CW - 2, y + 6, { align: 'right' });
-        y += 7;
-    }
-
-    // Total geral
-    if (y + 10 > 270) { doc.addPage(); y = 14; }
-    doc.setFillColor(...C_AZUL_ESC);
-    doc.rect(ML, y, CW, 12, 'F');
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(10);
-    doc.setTextColor(...C_BRANCO);
-    doc.text('TOTAL GERAL', ML + CW - COL_TMAO - 30, y + 8, { align: 'right' });
-    doc.setFontSize(13);
-    doc.setTextColor(...C_AZUL_CLA);
-    doc.text(formatarMoeda(dados.totalComDesconto), ML + CW - 2, y + 8.5, { align: 'right' });
-    y += 16;
-
-    // ── OBSERVAÇÕES ───────────────────────────────────────────────
-    if (dados.obs && dados.obs.trim()) {
-        if (y + 16 > 270) { doc.addPage(); y = 14; }
-        const obsLinhas = doc.splitTextToSize(dados.obs.trim(), CW - 8);
-        const obsH = Math.max(16, obsLinhas.length * 5 + 12);
-
-        doc.setFillColor(...C_AZUL_FADE);
-        doc.setDrawColor(...C_AZUL_MED);
-        doc.setLineWidth(0.8);
-        doc.rect(ML, y, CW, obsH, 'F');
-        doc.setFillColor(...C_AZUL_MED);
-        doc.rect(ML, y, 3, obsH, 'F');
-
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(7);
-        doc.setTextColor(...C_AZUL_MED);
-        doc.text('OBSERVAÇÕES', ML + 6, y + 6);
-
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(8.5);
-        doc.setTextColor(68, 68, 68);
-        doc.text(obsLinhas, ML + 6, y + 12);
-        y += obsH + 6;
-    }
-
-    // ── RODAPÉ ────────────────────────────────────────────────────
-    if (y + 10 > 275) { doc.addPage(); y = 14; }
-    doc.setDrawColor(...C_BORDA);
-    doc.setLineWidth(0.3);
-    doc.line(ML, y, ML + CW, y);
-    y += 5;
-
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    doc.setTextColor(...C_CINZA);
-    doc.text('Confidere Impermeabilizações', ML, y);
-    doc.text(`Orçamento válido até ${validFmt}`, ML + CW, y, { align: 'right' });
-
-    const nomeArq = `Orcamento_${numDisplay.replace('#', '')}_${(dados.cliente || 'cliente').replace(/\s+/g, '_')}.pdf`;
-    doc.save(nomeArq);
-    mostrarToast('PDF gerado com sucesso!', 'sucesso');
-}
-
-// Trunca texto para caber na largura máxima (em mm)
-function truncarTexto(doc, texto, maxW) {
-    if (!texto) return '';
-    if (doc.getTextWidth(texto) <= maxW) return texto;
-    let t = texto;
-    while (t.length > 1 && doc.getTextWidth(t + '…') > maxW) { t = t.slice(0, -1); }
-    return t + '…';
 }
 
 // ===== UTILITÁRIOS =====
@@ -824,6 +449,7 @@ function formatarMoeda(v) {
 
 function mostrarToast(msg, tipo = '') {
     const t = document.getElementById('toast');
+    if (!msg) { t.classList.remove('visivel'); return; }
     t.textContent = msg;
     t.className = 'toast ' + tipo;
     t.classList.add('visivel');
@@ -843,4 +469,195 @@ function fecharModal() {
 
 document.getElementById('modal-overlay').addEventListener('click', e => {
     if (e.target === e.currentTarget) fecharModal();
+});
+
+// ===== PDF =====
+function gerarPDF() {
+    if (typeof window.jspdf === 'undefined' && typeof jsPDF === 'undefined') {
+        mostrarToast('Biblioteca PDF não carregada. Recarregue a página.', 'erro');
+        return;
+    }
+    const dados = coletarDados();
+    if (!dados.cliente) { mostrarToast('Informe o nome do cliente antes de gerar o PDF.', 'erro'); return; }
+    mostrarToast('Gerando PDF...', '');
+
+    const { jsPDF: JsPDF } = window.jspdf || {};
+    const Doc = JsPDF || jsPDF;
+    const doc = new Doc({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+
+    const numDisplay = document.getElementById('display-numero').textContent;
+    const dataFmt  = dados.data     ? new Date(dados.data     + 'T12:00:00').toLocaleDateString('pt-BR') : '—';
+    const validFmt = dados.validade ? new Date(dados.validade + 'T12:00:00').toLocaleDateString('pt-BR') : '—';
+
+    const PW = 210, ML = 14, MR = 14, CW = PW - ML - MR;
+    const C_AZUL_ESC  = [26,58,92], C_AZUL_MED = [37,99,168], C_AZUL_CLA = [74,144,217];
+    const C_AZUL_FADE = [232,240,250], C_LARANJA = [224,92,32];
+    const C_BRANCO = [255,255,255], C_TEXTO = [26,24,20];
+    const C_CINZA = [107,102,96], C_BORDA = [216,212,204], C_ZEBRA = [245,247,250];
+
+    let y = 0;
+    const HEADER_H = 28;
+    doc.setFillColor(...C_AZUL_ESC);
+    doc.rect(0, 0, PW, HEADER_H, 'F');
+
+    if (logoBase64) {
+        try {
+            const fmt = logoBase64.startsWith('data:image/png') ? 'PNG' : logoBase64.startsWith('data:image/svg') ? 'SVG' : 'JPEG';
+            doc.addImage(logoBase64, fmt === 'SVG' ? 'PNG' : fmt, ML, 5, 40, 18, undefined, 'FAST');
+        } catch { _pdfLogoTexto(doc, ML, C_BRANCO, C_AZUL_CLA); }
+    } else {
+        _pdfLogoTexto(doc, ML, C_BRANCO, C_AZUL_CLA);
+    }
+
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(...C_AZUL_CLA);
+    doc.text('ORÇAMENTO', PW - MR, 14, { align: 'right' });
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(20); doc.setTextColor(...C_BRANCO);
+    doc.text(numDisplay, PW - MR, 24, { align: 'right' });
+    y = HEADER_H + 8;
+
+    // Cliente
+    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...C_CINZA);
+    doc.text('CLIENTE', ML, y); doc.text('DATA', ML + CW * 0.55, y); doc.text('VALIDADE', ML + CW * 0.78, y);
+    y += 4;
+    doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(...C_TEXTO);
+    doc.text(dados.cliente || '—', ML, y);
+    doc.setFont('helvetica','normal'); doc.setFontSize(10);
+    doc.text(dataFmt, ML + CW * 0.55, y);
+    doc.text(validFmt, ML + CW * 0.78, y);
+    y += 6;
+    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...C_CINZA);
+    if (dados.endereco) { doc.text(dados.endereco + (dados.estado ? ', ' + dados.estado : ''), ML, y); y += 5; }
+    if (dados.obra) { doc.text(dados.obra, ML, y); y += 5; }
+    doc.setDrawColor(...C_BORDA); doc.setLineWidth(0.3); doc.line(ML, y, ML + CW, y); y += 5;
+
+    // Tabela
+    const ROW_H = 10;
+    const COL_DESC=55, COL_UNID=14, COL_MAT=38, COL_CMAT=18, COL_CMO=18, COL_TMAT=18, COL_TMAO=18;
+    const cols = [
+        { label:'Descrição / Área', w:COL_DESC, align:'left' },
+        { label:'m²', w:COL_UNID, align:'center' },
+        { label:'Material', w:COL_MAT, align:'left' },
+        { label:'Mat. m²', w:COL_CMAT, align:'right' },
+        { label:'M.O. m²', w:COL_CMO, align:'right' },
+        { label:'Total Material', w:COL_TMAT, align:'right' },
+        { label:'Total M.Obra', w:COL_TMAO, align:'right' },
+    ];
+    doc.setFillColor(...C_AZUL_ESC); doc.rect(ML, y, CW, ROW_H, 'F');
+    let cx = ML;
+    cols.forEach(col => {
+        doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(...C_BRANCO);
+        const tx = col.align==='right' ? cx+col.w-2 : col.align==='center' ? cx+col.w/2 : cx+2;
+        doc.text(col.label, tx, y+5.5, { align: col.align });
+        cx += col.w;
+    });
+    y += ROW_H;
+
+    const linhasFiltradas = dados.linhas.filter(l => l.desc || l.total > 0);
+    if (linhasFiltradas.length === 0) {
+        doc.setFillColor(...C_ZEBRA); doc.rect(ML, y, CW, ROW_H, 'F');
+        doc.setFont('helvetica','italic'); doc.setFontSize(8); doc.setTextColor(...C_CINZA);
+        doc.text('Nenhum item adicionado', ML+2, y+5.5); y += ROW_H;
+    } else {
+        linhasFiltradas.forEach((l, i) => {
+            if (y + ROW_H > 270) { doc.addPage(); y = 14; }
+            doc.setFillColor(...(i%2===0 ? C_ZEBRA : C_BRANCO)); doc.rect(ML, y, CW, ROW_H, 'F');
+            doc.setDrawColor(...C_BORDA); doc.setLineWidth(0.2); doc.line(ML, y+ROW_H, ML+CW, y+ROW_H);
+            doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(...C_TEXTO);
+            let ccx = ML;
+            doc.text(truncarTexto(doc, `${l.desc||'-'} - ${l.area||0} m²`, COL_DESC-4), ccx+2, y+5.5); ccx+=COL_DESC;
+            doc.text(String(l.area||0), ccx+COL_UNID/2, y+5.5, { align:'center' }); ccx+=COL_UNID;
+            doc.text(truncarTexto(doc, l.material||'-', COL_MAT-4), ccx+2, y+5.5); ccx+=COL_MAT;
+            doc.text(formatarMoeda(l.custoMaterial||0), ccx+COL_CMAT-2, y+5.5, { align:'right' }); ccx+=COL_CMAT;
+            doc.text(formatarMoeda(l.custoMao||0), ccx+COL_CMO-2, y+5.5, { align:'right' }); ccx+=COL_CMO;
+            doc.setFont('helvetica','bold'); doc.setTextColor(...C_AZUL_ESC);
+            doc.text(formatarMoeda(l.subtotalMaterial), ccx+COL_TMAT-2, y+5.5, { align:'right' }); ccx+=COL_TMAT;
+            doc.text(formatarMoeda(l.subtotalMao), ccx+COL_TMAO-2, y+5.5, { align:'right' });
+            doc.setFont('helvetica','normal'); doc.setTextColor(...C_TEXTO);
+            y += l.material ? ROW_H+2 : ROW_H;
+        });
+    }
+
+    doc.setDrawColor(...C_AZUL_ESC); doc.setLineWidth(0.5); doc.line(ML, y, ML+CW, y); y += 1;
+    const totais = calcularTotais();
+    [
+        ['Subtotal Material', totais.subtotalMaterial],
+        ['Subtotal Mão de Obra', totais.subtotalMaoObra],
+    ].forEach(([label, val]) => {
+        if (y+7>270) { doc.addPage(); y=14; }
+        doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...C_CINZA);
+        doc.text(label, ML+CW-COL_TMAO-30, y+6, { align:'right' });
+        doc.setTextColor(...C_TEXTO); doc.text(formatarMoeda(val), ML+CW-2, y+6, { align:'right' }); y+=6;
+    });
+    y += 2;
+    if (dados.desconto) {
+        if (y+7>270) { doc.addPage(); y=14; }
+        doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...C_LARANJA);
+        doc.text(`Desconto (${dados.desconto}%)`, ML+CW-COL_TMAO-30, y+6, { align:'right' });
+        doc.text(`- ${formatarMoeda(dados.subtotal * dados.desconto/100)}`, ML+CW-2, y+6, { align:'right' }); y+=7;
+    }
+    if (y+10>270) { doc.addPage(); y=14; }
+    doc.setFillColor(...C_AZUL_ESC); doc.rect(ML, y, CW, 12, 'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...C_BRANCO);
+    doc.text('TOTAL GERAL', ML+CW-COL_TMAO-30, y+8, { align:'right' });
+    doc.setFontSize(13); doc.setTextColor(...C_AZUL_CLA);
+    doc.text(formatarMoeda(dados.totalComDesconto), ML+CW-2, y+8.5, { align:'right' }); y += 16;
+
+    if (dados.obs && dados.obs.trim()) {
+        if (y+16>270) { doc.addPage(); y=14; }
+        const obsLinhas = doc.splitTextToSize(dados.obs.trim(), CW-8);
+        const obsH = Math.max(16, obsLinhas.length*5+12);
+        doc.setFillColor(...C_AZUL_FADE); doc.setDrawColor(...C_AZUL_MED); doc.setLineWidth(0.8);
+        doc.rect(ML, y, CW, obsH, 'F');
+        doc.setFillColor(...C_AZUL_MED); doc.rect(ML, y, 3, obsH, 'F');
+        doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(...C_AZUL_MED);
+        doc.text('OBSERVAÇÕES', ML+6, y+6);
+        doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(68,68,68);
+        doc.text(obsLinhas, ML+6, y+12); y += obsH+6;
+    }
+
+    if (y+10>275) { doc.addPage(); y=14; }
+    doc.setDrawColor(...C_BORDA); doc.setLineWidth(0.3); doc.line(ML, y, ML+CW, y); y+=5;
+    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(...C_CINZA);
+    doc.text('Confidere Impermeabilizações', ML, y);
+    doc.text(`Orçamento válido até ${validFmt}`, ML+CW, y, { align:'right' });
+
+    const nomeArq = `Orcamento_${numDisplay.replace('#','')}_${(dados.cliente||'cliente').replace(/\s+/g,'_')}.pdf`;
+    doc.save(nomeArq);
+    mostrarToast('PDF gerado com sucesso!', 'sucesso');
+}
+
+function _pdfLogoTexto(doc, ML, C_BRANCO, C_AZUL_CLA) {
+    doc.setFont('helvetica','bold'); doc.setFontSize(22); doc.setTextColor(...C_BRANCO);
+    doc.text('CONFI', ML, 16);
+    doc.setTextColor(...C_AZUL_CLA);
+    doc.text('DERE', ML + doc.getTextWidth('CONFI'), 16);
+    doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(200,210,225);
+    doc.text('IMPERMEABILIZAÇÕES', ML, 22);
+}
+
+function truncarTexto(doc, texto, maxW) {
+    if (!texto) return '';
+    if (doc.getTextWidth(texto) <= maxW) return texto;
+    let t = texto;
+    while (t.length > 1 && doc.getTextWidth(t + '…') > maxW) { t = t.slice(0,-1); }
+    return t + '…';
+}
+
+// Exportar funções para uso global (onclick no HTML)
+Object.assign(window, {
+    mudarAba, adicionarLinha, removerLinha, calcularLinha, calcularTotais,
+    toggleDesconto, aplicarDesconto, limparDesconto,
+    salvarOrcamento, novoOrcamento, editarOrcamento, confirmarExcluir,
+    filtrarHistorico, renderizarHistorico,
+    carregarLogo, removerLogo,
+    gerarPDF, formatarMoeda, mostrarToast, abrirModal, fecharModal,
+    getHistorico, setHistorico, proximoNumero, atualizarNumeroDisplay,
+    logoBase64
+});
+
+// Proxy para logoBase64 (precisa ser acessível por referência)
+Object.defineProperty(window, 'logoBase64', {
+    get() { return logoBase64; },
+    set(v) { logoBase64 = v; },
+    configurable: true
 });
