@@ -81,6 +81,7 @@ function userDoc(colName, id) {
   return doc(db, "users", getUid(), colName, id);
 }
 
+//Sanitizar Objeto, caso algum dado esteja null ou undefined
 function sanitizar(obj) {
   return JSON.parse(JSON.stringify(obj, (_, v) => v === undefined ? null : v));
 }
