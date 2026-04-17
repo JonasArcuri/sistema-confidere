@@ -81,9 +81,12 @@ function userDoc(colName, id) {
   return doc(db, "users", getUid(), colName, id);
 }
 
+function sanitizar(obj) {
+  return JSON.parse(JSON.stringify(obj, (_, v) => v === undefined ? null : v));
+}
+
 // ===== ORÇAMENTOS =====
 const DB = {
-
   // — Orçamentos —
   async listarOrcamentos() {
     const q = query(userCol("orcamentos"), orderBy("criadoEm", "desc"));
@@ -91,12 +94,14 @@ const DB = {
     return snap.docs.map(d => ({ id: d.id, ...d.data() }));
   },
 
+
   async salvarOrcamento(dados, id = null) {
+    const dadosLimpos = sanitizar(dados);
     if (id) {
-      await setDoc(userDoc("orcamentos", id), { ...dados, atualizadoEm: serverTimestamp() }, { merge: true });
+      await setDoc(userDoc("orcamentos", id), { ...dadosLimpos, atualizadoEm: serverTimestamp() }, { merge: true });
       return id;
     } else {
-      const ref = await addDoc(userCol("orcamentos"), { ...dados, criadoEm: serverTimestamp() });
+      const ref = await addDoc(userCol("orcamentos"), { ...dadosLimpos, criadoEm: serverTimestamp() });
       return ref.id;
     }
   },
