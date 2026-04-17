@@ -179,6 +179,46 @@ const DB = {
   async removerLogo() {
     const { updateDoc, deleteField } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
     await updateDoc(doc(db, "users", getUid()), { logo: deleteField() });
+  },
+
+  // — Insumos / Despesas —
+  async listarInsumos() {
+    const snap = await getDocs(query(userCol("insumos"), orderBy("data", "desc")));
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  },
+
+  async salvarInsumo(dados, id = null) {
+    if (id) {
+      await setDoc(userDoc("insumos", id), { ...dados, atualizadoEm: serverTimestamp() }, { merge: true });
+      return id;
+    } else {
+      const ref = await addDoc(userCol("insumos"), { ...dados, criadoEm: serverTimestamp() });
+      return ref.id;
+    }
+  },
+
+  async excluirInsumo(id) {
+    await deleteDoc(userDoc("insumos", id));
+  },
+
+  // — Obras —
+  async listarObras() {
+    const snap = await getDocs(query(userCol("obras"), orderBy("data", "desc")));
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  },
+
+  async salvarObra(dados, id = null) {
+    if (id) {
+      await setDoc(userDoc("obras", id), { ...dados, atualizadoEm: serverTimestamp() }, { merge: true });
+      return id;
+    } else {
+      const ref = await addDoc(userCol("obras"), { ...dados, criadoEm: serverTimestamp() });
+      return ref.id;
+    }
+  },
+
+  async excluirObra(id) {
+    await deleteDoc(userDoc("obras", id));
   }
 };
 

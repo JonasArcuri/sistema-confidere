@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="src/style.css">
   <link rel="stylesheet" href="src/gestao.css">
   <link rel="stylesheet" href="src/auth.css">
+  <link rel="stylesheet" href="src/insumos_obras.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 
@@ -295,6 +296,22 @@
             </svg>
             Relatório de Obra
           </button>
+          <button class="gestao-sub-tab" onclick="mudarSubAba('insumos', this)">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+              <line x1="3" y1="6" x2="21" y2="6"/>
+              <path d="M16 10a4 4 0 01-8 0"/>
+            </svg>
+            Insumos/Despesas
+          </button>
+          <button class="gestao-sub-tab" onclick="mudarSubAba('obras', this)">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polygon points="3,18 12,2 21,18"/>
+              <line x1="12" y1="9" x2="12" y2="14"/>
+              <circle cx="12" cy="16.5" r="0.5" fill="currentColor"/>
+            </svg>
+            Obras
+          </button>
         </div>
 
         <!-- SUB-ABA: CALENDÁRIO -->
@@ -324,6 +341,9 @@
               </div>
               <div class="cal-legenda-item">
                 <div class="cal-legenda-dot relatorio"></div> Relatório de Obra
+              </div>
+              <div class="cal-legenda-item">
+                <div class="cal-legenda-dot insumo"></div> Insumo / Despesa
               </div>
             </div>
           </div>
@@ -386,6 +406,74 @@
             <div class="hist-vazio">
               <div class="icone">📋</div>
               <p>Nenhum relatório cadastrado.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUB-ABA: INSUMOS / DESPESAS -->
+        <div id="sub-insumos" class="gestao-sub-aba">
+          <div class="ins-topo">
+            <div class="func-topo-titulo">Insumos / Despesas</div>
+            <button class="btn-primario" onclick="abrirModalInsumo()" style="padding:8px 16px;font-size:13px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              Novo Insumo/Despesa
+            </button>
+          </div>
+          <div class="ins-filtros">
+            <div class="campo">
+              <label>Por Tipo</label>
+              <select id="filtro-ins-tipo" onchange="aplicarFiltrosInsumos()">
+                <option value="">Todos os tipos</option>
+                <option value="veiculo">Veículo</option>
+                <option value="trajeto">Trajeto</option>
+                <option value="material">Material</option>
+                <option value="ferramenta">Ferramenta</option>
+              </select>
+            </div>
+            <div class="campo">
+              <label>Por Funcionário</label>
+              <select id="filtro-ins-func" onchange="aplicarFiltrosInsumos()">
+                <option value="">Todos</option>
+              </select>
+            </div>
+            <div class="campo">
+              <label>Por Mês</label>
+              <input type="month" id="filtro-ins-mes" onchange="aplicarFiltrosInsumos()">
+            </div>
+            <div style="display:flex;align-items:flex-end;">
+              <button class="btn-secundario" onclick="limparFiltrosIns()" style="white-space:nowrap;">Limpar</button>
+            </div>
+          </div>
+          <div class="ins-lista" id="ins-lista">
+            <div class="hist-vazio">
+              <div class="icone">🧾</div>
+              <p>Nenhum insumo/despesa registrado.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUB-ABA: OBRAS -->
+        <div id="sub-obras" class="gestao-sub-aba">
+          <div class="obras-topo">
+            <div class="func-topo-titulo">Obras</div>
+            <button class="btn-primario" onclick="abrirModalObra()" style="padding:8px 16px;font-size:13px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              Adicionar Obra
+            </button>
+          </div>
+          <div class="obras-filtros-bar">
+            <button class="obras-filtro-btn ativo" data-filtro="todos" onclick="setFiltroObras('todos', this)">Todas</button>
+            <button class="obras-filtro-btn" data-filtro="execucao" onclick="setFiltroObras('execucao', this)">Em Execução</button>
+            <button class="obras-filtro-btn" data-filtro="finalizada" onclick="setFiltroObras('finalizada', this)">Finalizadas</button>
+          </div>
+          <div class="obras-lista" id="obras-lista">
+            <div class="hist-vazio">
+              <div class="icone">🏗️</div>
+              <p>Nenhuma obra cadastrada.</p>
             </div>
           </div>
         </div>
@@ -483,8 +571,15 @@
       <div class="modal-gestao">
         <h3 id="modal-rel-titulo">Novo Relatório de Obra</h3>
         <input type="hidden" id="rel-id-edit">
+        <input type="hidden" id="rel-funcionarios-ids-hidden">
         <div style="display:flex;flex-direction:column;gap:1rem;">
-          <div class="campo">
+          <div class="campo rel-obra-row">
+            <label>Selecionar Obra Cadastrada</label>
+            <select id="rel-obra-select">
+              <option value="">Digitar manualmente...</option>
+            </select>
+          </div>
+          <div class="campo" id="rel-obra-manual-wrap">
             <label>Nome da Obra *</label>
             <input type="text" id="rel-obra" placeholder="Ex: Impermeabilização Telhado - Rua das Flores">
           </div>
@@ -494,14 +589,18 @@
               <input type="date" id="rel-data">
             </div>
             <div class="campo">
-              <label>Funcionário</label>
-              <select id="rel-funcionario"></select>
+              <label>Valor de Rendimento (R$)</label>
+              <input type="number" id="rel-rendimento" placeholder="0,00" step="0.01" min="0">
             </div>
           </div>
           <div class="campo">
-            <label>Valor de Rendimento (R$)</label>
-            <input type="number" id="rel-rendimento" placeholder="0,00" step="0.01" min="0">
+            <label>Funcionários (selecione um ou mais)</label>
+            <div class="func-check-group" id="rel-funcionarios-check">
+              <div style="font-size:13px;color:var(--cinza-texto)">Carregando...</div>
+            </div>
           </div>
+          <!-- Mantido para compatibilidade com código legado -->
+          <select id="rel-funcionario" style="display:none"></select>
           <div class="campo">
             <label>Observações</label>
             <textarea id="rel-obs" rows="3" placeholder="Detalhes da execução, materiais usados..."></textarea>
@@ -512,6 +611,105 @@
           <button class="btn-primario" onclick="salvarRelatorio()">Salvar Relatório</button>
         </div>
       </div>
+    </div>
+
+    <!-- MODAL NOVO INSUMO / DESPESA -->
+    <div class="modal-overlay" id="modal-insumo" onclick="if(event.target===this)fecharModalInsumo()">
+      <div class="modal-gestao">
+        <h3 id="modal-ins-titulo">Novo Insumo/Despesa</h3>
+        <input type="hidden" id="ins-id-edit">
+        <div style="display:flex;flex-direction:column;gap:1rem;">
+          <div class="grid-2">
+            <div class="campo">
+              <label>Tipo *</label>
+              <select id="ins-tipo">
+                <option value="material">Material</option>
+                <option value="ferramenta">Ferramenta</option>
+                <option value="veiculo">Veículo</option>
+                <option value="trajeto">Trajeto</option>
+              </select>
+            </div>
+            <div class="campo">
+              <label>Data *</label>
+              <input type="date" id="ins-data">
+            </div>
+          </div>
+          <div class="campo">
+            <label>Funcionário (opcional)</label>
+            <select id="ins-funcionario"></select>
+          </div>
+          <div class="campo">
+            <label>Valor (R$)</label>
+            <input type="number" id="ins-valor" placeholder="0,00" step="0.01" min="0">
+          </div>
+          <div class="campo">
+            <label>Descrição</label>
+            <input type="text" id="ins-descricao" placeholder="Ex: Reparo pneu Ranger, Chave de impacto...">
+          </div>
+          <div class="campo">
+            <label>Observações adicionais</label>
+            <textarea id="ins-obs" rows="2" placeholder="Detalhes extras..."></textarea>
+          </div>
+          <div class="campo">
+            <label>Foto (comprovante / nota fiscal)</label>
+            <div class="ins-foto-preview-wrap">
+              <img id="ins-foto-preview" src="" alt="Pré-visualização">
+              <label class="btn-foto-upload">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                  <polyline points="17 8 12 3 7 8"/>
+                  <line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+                Adicionar Foto
+                <input type="file" accept="image/*" style="display:none" onchange="handleFotoInsumo(this)">
+              </label>
+            </div>
+            <input type="hidden" id="ins-foto-base64">
+          </div>
+        </div>
+        <div class="modal-acoes" style="margin-top:1.5rem;">
+          <button class="btn-secundario" onclick="fecharModalInsumo()">Cancelar</button>
+          <button class="btn-primario" onclick="salvarInsumo()">Salvar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL NOVA OBRA -->
+    <div class="modal-overlay" id="modal-obra" onclick="if(event.target===this)fecharModalObra()">
+      <div class="modal-gestao">
+        <h3 id="modal-obra-titulo">Adicionar Obra</h3>
+        <input type="hidden" id="obra-id-edit">
+        <div style="display:flex;flex-direction:column;gap:1rem;">
+          <div class="campo">
+            <label>Nome da Obra *</label>
+            <input type="text" id="obra-nome" placeholder="Ex: Impermeabilização Edifício Central">
+          </div>
+          <div class="campo">
+            <label>Construtora / Empreiteiro</label>
+            <input type="text" id="obra-construtora" placeholder="Razão social ou nome do responsável">
+          </div>
+          <div class="grid-2">
+            <div class="campo">
+              <label>Data de Início</label>
+              <input type="date" id="obra-data">
+            </div>
+            <div class="campo">
+              <label>Local / Endereço</label>
+              <input type="text" id="obra-local" placeholder="Cidade, bairro ou endereço">
+            </div>
+          </div>
+        </div>
+        <div class="modal-acoes" style="margin-top:1.5rem;">
+          <button class="btn-secundario" onclick="fecharModalObra()">Cancelar</button>
+          <button class="btn-primario" onclick="salvarObra()">Salvar Obra</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL FOTO INSUMO (tela cheia) -->
+    <div id="modal-foto-insumo" onclick="fecharFotoInsumo()">
+      <button class="fechar-foto" onclick="fecharFotoInsumo()">×</button>
+      <img id="foto-insumo-img" src="" alt="Foto insumo">
     </div>
 
     <!-- MODAL CONFIRMAÇÃO -->
@@ -534,6 +732,8 @@
   <!-- ===== SCRIPTS (ES Modules) ===== -->
   <script type="module" src="src/script.js"></script>
   <script type="module" src="src/gestao.js"></script>
+  <script type="module" src="src/insumos.js"></script>
+  <script type="module" src="src/obras.js"></script>
   <script type="module" src="src/auth.js"></script>
 
 </body>

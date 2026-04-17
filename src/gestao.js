@@ -33,6 +33,8 @@ function mudarSubAba(sub, btn) {
   if (sub === 'calendario')  renderizarCalendario();
   if (sub === 'funcionarios') renderizarFuncionarios();
   if (sub === 'relatorios')  renderizarRelatorios();
+  if (sub === 'insumos')     { popularSelectFuncionariosIns?.(); renderizarInsumos?.(); }
+  if (sub === 'obras')       renderizarObras?.();
 }
 
 // ========== CALENDÁRIO ==========
@@ -72,6 +74,7 @@ function renderizarCalendario() {
 
     const eventos = getEventosDia(dataStr);
     const relDia  = relatorios.filter(r => r.data === dataStr);
+    const insDia  = (window.insumos || []).filter(i => i.data === dataStr);
 
     el.innerHTML = `<span class="cal-num">${dia}</span>`;
 
@@ -92,6 +95,13 @@ function renderizarCalendario() {
       const badge = document.createElement('div');
       badge.className = 'cal-evento relatorio';
       badge.textContent = rel.obra;
+      el.appendChild(badge);
+    });
+
+    insDia.slice(0, 1).forEach(ins => {
+      const badge = document.createElement('div');
+      badge.className = 'cal-evento insumo';
+      badge.textContent = ins.descricao || ins.tipo;
       el.appendChild(badge);
     });
 
@@ -126,10 +136,11 @@ function calHoje() {
 function abrirDiaDetalhe(dataStr, dia) {
   const eventos = getEventosDia(dataStr);
   const rels = relatorios.filter(r => r.data === dataStr);
+  const ins  = (window.insumos || []).filter(i => i.data === dataStr);
 
   let html = `<div class="detalhe-data-titulo">${dia} de ${MESES[calMes]}, ${calAno}</div>`;
 
-  if (eventos.length === 0 && rels.length === 0) {
+  if (eventos.length === 0 && rels.length === 0 && ins.length === 0) {
     html += `<p class="detalhe-vazio">Nenhum evento neste dia.</p>`;
   }
 
@@ -148,13 +159,28 @@ function abrirDiaDetalhe(dataStr, dia) {
   if (rels.length > 0) {
     html += `<div class="detalhe-secao-label">Relatórios de Obra</div>`;
     rels.forEach(rel => {
-      const func = funcionarios.find(f => f.id === rel.funcionarioId);
+      const nomesFunc = rel.funcionariosNomes || funcionarios.find(f => f.id === rel.funcionarioId)?.nome || rel.funcionarioNome || '-';
       html += `<div class="detalhe-item relat">
         <div class="detalhe-item-titulo">🔧 ${rel.obra}</div>
-        <div class="detalhe-item-meta">Funcionário: ${func ? func.nome : rel.funcionarioNome || '-'}</div>
+        <div class="detalhe-item-meta">Funcionário(s): ${nomesFunc}</div>
         <div class="detalhe-item-meta">Rendimento: <strong>${formatarMoeda(rel.rendimento)}</strong></div>
         ${rel.obs ? `<div class="detalhe-item-obs">${rel.obs}</div>` : ''}
         <button class="btn-mini excluir" onclick="excluirRelatorio('${rel.id}')">Excluir</button>
+      </div>`;
+    });
+  }
+
+  if (ins.length > 0) {
+    const TIPO_LABELS = { veiculo: 'Veículo', trajeto: 'Trajeto', material: 'Material', ferramenta: 'Ferramenta' };
+    html += `<div class="detalhe-secao-label">Insumos / Despesas</div>`;
+    ins.forEach(i => {
+      const func = funcionarios.find(f => f.id === i.funcionarioId);
+      html += `<div class="detalhe-item" style="border-left-color:#7c5cbf;">
+        <div class="detalhe-item-titulo">🧾 ${i.descricao || TIPO_LABELS[i.tipo] || i.tipo}</div>
+        <div class="detalhe-item-meta">Tipo: ${TIPO_LABELS[i.tipo] || i.tipo}${func ? ' · ' + func.nome : ''}</div>
+        <div class="detalhe-item-meta">Valor: <strong>${formatarMoeda(i.valor)}</strong></div>
+        ${i.obs ? `<div class="detalhe-item-obs">${i.obs}</div>` : ''}
+        <button class="btn-mini excluir" onclick="excluirInsumo('${i.id}')">Excluir</button>
       </div>`;
     });
   }
@@ -376,14 +402,14 @@ function aplicarFiltrosRelatorio() {
   }
 
   cont.innerHTML = lista.map(rel => {
-    const func = funcionarios.find(f => f.id === rel.funcionarioId);
+    const nomesFunc = rel.funcionariosNomes || funcionarios.find(f => f.id === rel.funcionarioId)?.nome || rel.funcionarioNome || '-';
     const dataFmt = rel.data ? new Date(rel.data + 'T00:00:00').toLocaleDateString('pt-BR') : '-';
     return `<div class="rel-card">
       <div class="rel-card-header">
         <div class="rel-card-info">
           <div class="rel-card-obra">${rel.obra}</div>
           <div class="rel-card-meta">📅 ${dataFmt}</div>
-          <div class="rel-card-meta">👷 ${func ? func.nome : rel.funcionarioNome || '-'}</div>
+          <div class="rel-card-meta">👷 ${nomesFunc}</div>
           ${rel.obs ? `<div class="rel-card-obs">${rel.obs}</div>` : ''}
         </div>
         <div class="rel-card-valor">

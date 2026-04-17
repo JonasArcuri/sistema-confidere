@@ -107,9 +107,16 @@ async function carregarDadosIniciais() {
       DB.listarRelatorios()
     ]);
 
+    // Carregar insumos e obras
+    const [insumosData, obrasData] = await Promise.all([
+      DB.listarInsumos(),
+      DB.listarObras()
+    ]);
+    window.insumos = insumosData;
+    window.obras   = obrasData;
+
     // Carregar histórico de orçamentos
     const orcamentos = await DB.listarOrcamentos();
-    // Salvar no estado global (script.js usa getHistorico())
     window._orcamentosFirestore = orcamentos;
 
     // Carregar logo do Firestore

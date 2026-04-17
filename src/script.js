@@ -45,16 +45,16 @@ function carregarLogo(event) {
 }
 
 function aplicarLogoNaTela(src) {
-    const navImg    = document.getElementById('nav-logo-img');
-    const navTexto  = document.getElementById('nav-logo-texto');
-    const navArea   = document.querySelector('.nav-logo-area');
+    const navImg = document.getElementById('nav-logo-img');
+    const navTexto = document.getElementById('nav-logo-texto');
+    const navArea = document.querySelector('.nav-logo-area');
     navImg.src = src;
     navImg.style.display = 'block';
     navTexto.style.display = 'none';
     navArea.classList.add('com-logo');
     document.getElementById('btn-remover-logo').style.display = 'flex';
 
-    const headerImg   = document.getElementById('header-logo-img');
+    const headerImg = document.getElementById('header-logo-img');
     const headerTexto = document.getElementById('header-logo-texto');
     headerImg.src = src;
     headerImg.style.display = 'block';
@@ -65,16 +65,16 @@ async function removerLogo() {
     logoBase64 = null;
     try { await DB.removerLogo(); } catch { /* silencioso */ }
 
-    const navImg   = document.getElementById('nav-logo-img');
+    const navImg = document.getElementById('nav-logo-img');
     const navTexto = document.getElementById('nav-logo-texto');
-    const navArea  = document.querySelector('.nav-logo-area');
+    const navArea = document.querySelector('.nav-logo-area');
     navImg.src = '';
     navImg.style.display = 'none';
     navTexto.style.display = '';
     navArea.classList.remove('com-logo');
     document.getElementById('btn-remover-logo').style.display = 'none';
 
-    const headerImg   = document.getElementById('header-logo-img');
+    const headerImg = document.getElementById('header-logo-img');
     const headerTexto = document.getElementById('header-logo-texto');
     headerImg.src = '';
     headerImg.style.display = 'none';
@@ -118,9 +118,9 @@ function adicionarLinha(desc = '', area = '', material = '', custoMaterial = '',
     const tr = document.createElement('tr');
     tr.dataset.id = id;
 
-    const areaNum  = parseFloat(area) || 0;
-    const matNum   = parseFloat(custoMaterial) || 0;
-    const maoNum   = parseFloat(custoMao) || 0;
+    const areaNum = parseFloat(area) || 0;
+    const matNum = parseFloat(custoMaterial) || 0;
+    const maoNum = parseFloat(custoMao) || 0;
     const initSubMat = areaNum * matNum;
     const initSubMao = areaNum * maoNum;
 
@@ -128,12 +128,12 @@ function adicionarLinha(desc = '', area = '', material = '', custoMaterial = '',
 <td class="col-desc">
 <select onchange="calcularLinha(${id})">
 ${[
-    'BWC(s)','Lavabo(s)','Sacada(s)','Caixa d Água','Cisterna','Terraço(s)',
-    'Janelas Etapa 1','Janelas Etapa 2','Piscina','Piscina Infantil(s)',
-    'Piscina Cobertura 1','Piscina Cobertura 2','Piscina Giardinho 1','Piscina Giardinho 2',
-    'Rampa Mezanino','Teto Cisterna','Teto Caixa Da Água','Laje Caixa Da Água',
-    'Muro Contenção','Floreira(s)','Outro'
-].map(v => `<option ${v === desc ? 'selected' : ''}>${v}</option>`).join('')}
+            'BWC(s)', 'Lavabo(s)', 'Sacada(s)', 'Caixa d Água', 'Cisterna', 'Terraço(s)',
+            'Janelas Etapa 1', 'Janelas Etapa 2', 'Piscina', 'Piscina Infantil(s)',
+            'Piscina Cobertura 1', 'Piscina Cobertura 2', 'Piscina Giardinho 1', 'Piscina Giardinho 2',
+            'Rampa Mezanino', 'Teto Cisterna', 'Teto Caixa Da Água', 'Laje Caixa Da Água',
+            'Muro Contenção', 'Floreira(s)', 'Barrilete', 'Outro'
+        ].map(v => `<option ${v === desc ? 'selected' : ''}>${v}</option>`).join('')}
 </select>
 </td>
 <td class="col-area">
@@ -142,11 +142,11 @@ ${[
 <td class="col-material">
 <select onchange="calcularLinha(${id})">
 <option value="">Selecione</option>
-${['Manta Asfáltica 4mm Anti Raiz','Manta Asfáltica 3mm Aluminizada','Manta Asfáltica 4mm TIPO 3 PP',
-   'Manta Asfáltica 4mm TIPO 3 AA','Manta Asfáltica 3mm PP','Membrana Líquida','Poliuretano',
-   'Sistema Icobit','Membrana Cimenticia','Membrana Cimenticia com Prot UV','Regularização Substrato',
-   'Proteção Mecanica','Membrana Acrilica com Prot UV','Cintamento Perimetral','Cristalização','Tamponamento'
-].map(v => `<option ${v === material ? 'selected' : ''}>${v}</option>`).join('')}
+${['Manta Asfáltica 4mm Anti Raiz', 'Manta Asfáltica 3mm Aluminizada', 'Manta Asfáltica 4mm TIPO 3 PP',
+            'Manta Asfáltica 4mm TIPO 3 AA', 'Manta Asfáltica 3mm PP', 'Membrana Líquida', 'Poliuretano',
+            'Sistema Icobit', 'Membrana Cimenticia', 'Membrana Cimenticia com Prot UV', 'Regularização Substrato',
+            'Proteção Mecanica', 'Membrana Acrilica com Prot UV', 'Cintamento Perimetral', 'Cristalização', 'Tamponamento'
+        ].map(v => `<option ${v === material ? 'selected' : ''}>${v}</option>`).join('')}
 </select>
 </td>
 <td class="col-qtd">
@@ -181,12 +181,12 @@ function calcularLinha(id) {
     const tr = document.querySelector(`tr[data-id="${id}"]`);
     if (!tr) return;
     const inputs = tr.querySelectorAll('input[type=number]');
-    const area       = parseFloat(inputs[0].value) || 0;
-    const custoMat   = parseFloat(inputs[1].value) || 0;
-    const custoMao   = parseFloat(inputs[2]?.value || 0) || 0;
+    const area = parseFloat(inputs[0].value) || 0;
+    const custoMat = parseFloat(inputs[1].value) || 0;
+    const custoMao = parseFloat(inputs[2]?.value || 0) || 0;
     const subMat = area * custoMat;
     const subMao = area * custoMao;
-    const total  = subMat + subMao;
+    const total = subMat + subMao;
 
     const elSubMat = tr.querySelector(`#submat-${id}`);
     const elSubMao = tr.querySelector(`#submao-${id}`);
@@ -200,16 +200,16 @@ function calcularTotais() {
     let subtotalMaterial = 0, subtotalMaoObra = 0, totalGeral = 0;
     document.querySelectorAll('#linhas-tbody tr').forEach(tr => {
         const inputs = tr.querySelectorAll('input[type=number]');
-        const area     = parseFloat(inputs[0].value) || 0;
+        const area = parseFloat(inputs[0].value) || 0;
         const material = parseFloat(inputs[1].value) || 0;
-        const maoObra  = parseFloat(inputs[2]?.value || 0) || 0;
+        const maoObra = parseFloat(inputs[2]?.value || 0) || 0;
         subtotalMaterial += area * material;
-        subtotalMaoObra  += area * maoObra;
-        totalGeral       += area * material + area * maoObra;
+        subtotalMaoObra += area * maoObra;
+        totalGeral += area * material + area * maoObra;
     });
     document.getElementById('disp-subtotal-material').textContent = formatarMoeda(subtotalMaterial);
-    document.getElementById('disp-subtotal-mao').textContent      = formatarMoeda(subtotalMaoObra);
-    document.getElementById('disp-total').textContent             = formatarMoeda(totalGeral);
+    document.getElementById('disp-subtotal-mao').textContent = formatarMoeda(subtotalMaoObra);
+    document.getElementById('disp-total').textContent = formatarMoeda(totalGeral);
     limparDescontoCalculo();
     return { subtotalMaterial, subtotalMaoObra, totalGeral };
 }
@@ -266,13 +266,13 @@ function coletarDados() {
     });
     const subtotal = linhas.reduce((a, l) => a + l.total, 0);
     return {
-        cliente:  document.getElementById('campo-cliente').value,
-        obra:     document.getElementById('campo-obra').value,
+        cliente: document.getElementById('campo-cliente').value,
+        obra: document.getElementById('campo-obra').value,
         endereco: document.getElementById('campo-endereco').value,
-        estado:   document.getElementById('campo-estado').value,
-        data:     document.getElementById('campo-data').value,
+        estado: document.getElementById('campo-estado').value,
+        data: document.getElementById('campo-data').value,
         validade: document.getElementById('campo-validade').value,
-        obs:      document.getElementById('campo-obs').value,
+        obs: document.getElementById('campo-obs').value,
         linhas, subtotal,
         desconto: descontoAplicado,
         totalComDesconto: descontoAplicado ? subtotal * (1 - descontoAplicado / 100) : subtotal
@@ -327,9 +327,9 @@ async function salvarOrcamento() {
 }
 
 function numeroRomano(n) {
-    const romanos = [['X',10],['IX',9],['V',5],['IV',4],['I',1]];
+    const romanos = [['X', 10], ['IX', 9], ['V', 5], ['IV', 4], ['I', 1]];
     let res = '';
-    for (const [r,v] of romanos) { while (n >= v) { res += r; n -= v; } }
+    for (const [r, v] of romanos) { while (n >= v) { res += r; n -= v; } }
     return res;
 }
 
@@ -362,13 +362,13 @@ function editarOrcamento(id) {
     const orc = getHistorico().find(o => o.id === id);
     if (!orc) return;
     orcamentoEditandoId = id;
-    document.getElementById('campo-cliente').value  = orc.cliente  || '';
-    document.getElementById('campo-obra').value     = orc.obra     || '';
+    document.getElementById('campo-cliente').value = orc.cliente || '';
+    document.getElementById('campo-obra').value = orc.obra || '';
     document.getElementById('campo-endereco').value = orc.endereco || '';
-    document.getElementById('campo-estado').value   = orc.estado   || '';
-    document.getElementById('campo-data').value     = orc.data     || '';
+    document.getElementById('campo-estado').value = orc.estado || '';
+    document.getElementById('campo-data').value = orc.data || '';
     document.getElementById('campo-validade').value = orc.validade || '';
-    document.getElementById('campo-obs').value      = orc.obs      || '';
+    document.getElementById('campo-obs').value = orc.obs || '';
     document.getElementById('linhas-tbody').innerHTML = '';
     linhaId = 0;
     (orc.linhas || []).forEach(l => adicionarLinha(l.desc, l.area, l.material, l.custoMaterial, l.custoMao, l.total));
@@ -420,18 +420,18 @@ function renderizarHistorico() {
 }
 
 function renderItemHistorico(o) {
-    const nRevs    = (o.revisoes || []).length;
-    const dataFmt  = o.data ? new Date(o.data + 'T12:00:00').toLocaleDateString('pt-BR') : '—';
+    const nRevs = (o.revisoes || []).length;
+    const dataFmt = o.data ? new Date(o.data + 'T12:00:00').toLocaleDateString('pt-BR') : '—';
     const savedFmt = o.savedAt ? new Date(o.savedAt).toLocaleDateString('pt-BR') : '';
-    const revBadge  = o.revisao  ? `<span class="hist-rev-badge">${o.revisao}</span>` : '';
+    const revBadge = o.revisao ? `<span class="hist-rev-badge">${o.revisao}</span>` : '';
     const nRevBadge = nRevs > 0 ? `<span class="hist-rev-badge" style="background:#6b6660">${nRevs} rev.</span>` : '';
     return `
     <div class="hist-item ${o.revisao ? 'rev' : ''}">
       <div class="hist-item-header">
         <div class="hist-item-info">
-          <div class="hist-item-num">#${String(o.numero).padStart(3,'0')} ${revBadge} ${nRevBadge}</div>
+          <div class="hist-item-num">#${String(o.numero).padStart(3, '0')} ${revBadge} ${nRevBadge}</div>
           <div class="hist-item-cliente">${o.cliente || '(sem nome)'}</div>
-          <div class="hist-item-meta">${o.obra || ''} ${o.estado ? '· '+o.estado : ''} ${dataFmt ? '· '+dataFmt : ''} ${savedFmt ? '· Salvo em '+savedFmt : ''}</div>
+          <div class="hist-item-meta">${o.obra || ''} ${o.estado ? '· ' + o.estado : ''} ${dataFmt ? '· ' + dataFmt : ''} ${savedFmt ? '· Salvo em ' + savedFmt : ''}</div>
         </div>
         <div class="hist-item-total">${formatarMoeda(o.totalComDesconto || o.subtotal || 0)}</div>
         <div class="hist-item-acoes">
@@ -486,14 +486,14 @@ function gerarPDF() {
     const doc = new Doc({ unit: 'mm', format: 'a4', orientation: 'portrait' });
 
     const numDisplay = document.getElementById('display-numero').textContent;
-    const dataFmt  = dados.data     ? new Date(dados.data     + 'T12:00:00').toLocaleDateString('pt-BR') : '—';
+    const dataFmt = dados.data ? new Date(dados.data + 'T12:00:00').toLocaleDateString('pt-BR') : '—';
     const validFmt = dados.validade ? new Date(dados.validade + 'T12:00:00').toLocaleDateString('pt-BR') : '—';
 
     const PW = 210, ML = 14, MR = 14, CW = PW - ML - MR;
-    const C_AZUL_ESC  = [26,58,92], C_AZUL_MED = [37,99,168], C_AZUL_CLA = [74,144,217];
-    const C_AZUL_FADE = [232,240,250], C_LARANJA = [224,92,32];
-    const C_BRANCO = [255,255,255], C_TEXTO = [26,24,20];
-    const C_CINZA = [107,102,96], C_BORDA = [216,212,204], C_ZEBRA = [245,247,250];
+    const C_AZUL_ESC = [26, 58, 92], C_AZUL_MED = [37, 99, 168], C_AZUL_CLA = [74, 144, 217];
+    const C_AZUL_FADE = [232, 240, 250], C_LARANJA = [224, 92, 32];
+    const C_BRANCO = [255, 255, 255], C_TEXTO = [26, 24, 20];
+    const C_CINZA = [107, 102, 96], C_BORDA = [216, 212, 204], C_ZEBRA = [245, 247, 250];
 
     let y = 0;
     const HEADER_H = 28;
@@ -516,38 +516,38 @@ function gerarPDF() {
     y = HEADER_H + 8;
 
     // Cliente
-    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...C_CINZA);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(...C_CINZA);
     doc.text('CLIENTE', ML, y); doc.text('DATA', ML + CW * 0.55, y); doc.text('VALIDADE', ML + CW * 0.78, y);
     y += 4;
-    doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(...C_TEXTO);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(...C_TEXTO);
     doc.text(dados.cliente || '—', ML, y);
-    doc.setFont('helvetica','normal'); doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
     doc.text(dataFmt, ML + CW * 0.55, y);
     doc.text(validFmt, ML + CW * 0.78, y);
     y += 6;
-    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...C_CINZA);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(...C_CINZA);
     if (dados.endereco) { doc.text(dados.endereco + (dados.estado ? ', ' + dados.estado : ''), ML, y); y += 5; }
     if (dados.obra) { doc.text(dados.obra, ML, y); y += 5; }
     doc.setDrawColor(...C_BORDA); doc.setLineWidth(0.3); doc.line(ML, y, ML + CW, y); y += 5;
 
     // Tabela
     const ROW_H = 10;
-    const COL_DESC=55, COL_UNID=14, COL_MAT=38, COL_CMAT=18, COL_CMO=18, COL_TMAT=18, COL_TMAO=18;
+    const COL_DESC = 55, COL_UNID = 14, COL_MAT = 38, COL_CMAT = 18, COL_CMO = 18, COL_TMAT = 18, COL_TMAO = 18;
     const cols = [
-        { label:'Descrição / Área', w:COL_DESC, align:'left' },
-        { label:'m²', w:COL_UNID, align:'center' },
-        { label:'Material', w:COL_MAT, align:'left' },
-        { label:'Mat. m²', w:COL_CMAT, align:'right' },
-        { label:'M.O. m²', w:COL_CMO, align:'right' },
-        { label:'Total Material', w:COL_TMAT, align:'right' },
-        { label:'Total M.Obra', w:COL_TMAO, align:'right' },
+        { label: 'Descrição / Área', w: COL_DESC, align: 'left' },
+        { label: 'm²', w: COL_UNID, align: 'center' },
+        { label: 'Material', w: COL_MAT, align: 'left' },
+        { label: 'Mat. m²', w: COL_CMAT, align: 'right' },
+        { label: 'M.O. m²', w: COL_CMO, align: 'right' },
+        { label: 'Total Material', w: COL_TMAT, align: 'right' },
+        { label: 'Total M.Obra', w: COL_TMAO, align: 'right' },
     ];
     doc.setFillColor(...C_AZUL_ESC); doc.rect(ML, y, CW, ROW_H, 'F');
     let cx = ML;
     cols.forEach(col => {
-        doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(...C_BRANCO);
-        const tx = col.align==='right' ? cx+col.w-2 : col.align==='center' ? cx+col.w/2 : cx+2;
-        doc.text(col.label, tx, y+5.5, { align: col.align });
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(...C_BRANCO);
+        const tx = col.align === 'right' ? cx + col.w - 2 : col.align === 'center' ? cx + col.w / 2 : cx + 2;
+        doc.text(col.label, tx, y + 5.5, { align: col.align });
         cx += col.w;
     });
     y += ROW_H;
@@ -555,83 +555,83 @@ function gerarPDF() {
     const linhasFiltradas = dados.linhas.filter(l => l.desc || l.total > 0);
     if (linhasFiltradas.length === 0) {
         doc.setFillColor(...C_ZEBRA); doc.rect(ML, y, CW, ROW_H, 'F');
-        doc.setFont('helvetica','italic'); doc.setFontSize(8); doc.setTextColor(...C_CINZA);
-        doc.text('Nenhum item adicionado', ML+2, y+5.5); y += ROW_H;
+        doc.setFont('helvetica', 'italic'); doc.setFontSize(8); doc.setTextColor(...C_CINZA);
+        doc.text('Nenhum item adicionado', ML + 2, y + 5.5); y += ROW_H;
     } else {
         linhasFiltradas.forEach((l, i) => {
             if (y + ROW_H > 270) { doc.addPage(); y = 14; }
-            doc.setFillColor(...(i%2===0 ? C_ZEBRA : C_BRANCO)); doc.rect(ML, y, CW, ROW_H, 'F');
-            doc.setDrawColor(...C_BORDA); doc.setLineWidth(0.2); doc.line(ML, y+ROW_H, ML+CW, y+ROW_H);
-            doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(...C_TEXTO);
+            doc.setFillColor(...(i % 2 === 0 ? C_ZEBRA : C_BRANCO)); doc.rect(ML, y, CW, ROW_H, 'F');
+            doc.setDrawColor(...C_BORDA); doc.setLineWidth(0.2); doc.line(ML, y + ROW_H, ML + CW, y + ROW_H);
+            doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(...C_TEXTO);
             let ccx = ML;
-            doc.text(truncarTexto(doc, `${l.desc||'-'} - ${l.area||0} m²`, COL_DESC-4), ccx+2, y+5.5); ccx+=COL_DESC;
-            doc.text(String(l.area||0), ccx+COL_UNID/2, y+5.5, { align:'center' }); ccx+=COL_UNID;
-            doc.text(truncarTexto(doc, l.material||'-', COL_MAT-4), ccx+2, y+5.5); ccx+=COL_MAT;
-            doc.text(formatarMoeda(l.custoMaterial||0), ccx+COL_CMAT-2, y+5.5, { align:'right' }); ccx+=COL_CMAT;
-            doc.text(formatarMoeda(l.custoMao||0), ccx+COL_CMO-2, y+5.5, { align:'right' }); ccx+=COL_CMO;
-            doc.setFont('helvetica','bold'); doc.setTextColor(...C_AZUL_ESC);
-            doc.text(formatarMoeda(l.subtotalMaterial), ccx+COL_TMAT-2, y+5.5, { align:'right' }); ccx+=COL_TMAT;
-            doc.text(formatarMoeda(l.subtotalMao), ccx+COL_TMAO-2, y+5.5, { align:'right' });
-            doc.setFont('helvetica','normal'); doc.setTextColor(...C_TEXTO);
-            y += l.material ? ROW_H+2 : ROW_H;
+            doc.text(truncarTexto(doc, `${l.desc || '-'} - ${l.area || 0} m²`, COL_DESC - 4), ccx + 2, y + 5.5); ccx += COL_DESC;
+            doc.text(String(l.area || 0), ccx + COL_UNID / 2, y + 5.5, { align: 'center' }); ccx += COL_UNID;
+            doc.text(truncarTexto(doc, l.material || '-', COL_MAT - 4), ccx + 2, y + 5.5); ccx += COL_MAT;
+            doc.text(formatarMoeda(l.custoMaterial || 0), ccx + COL_CMAT - 2, y + 5.5, { align: 'right' }); ccx += COL_CMAT;
+            doc.text(formatarMoeda(l.custoMao || 0), ccx + COL_CMO - 2, y + 5.5, { align: 'right' }); ccx += COL_CMO;
+            doc.setFont('helvetica', 'bold'); doc.setTextColor(...C_AZUL_ESC);
+            doc.text(formatarMoeda(l.subtotalMaterial), ccx + COL_TMAT - 2, y + 5.5, { align: 'right' }); ccx += COL_TMAT;
+            doc.text(formatarMoeda(l.subtotalMao), ccx + COL_TMAO - 2, y + 5.5, { align: 'right' });
+            doc.setFont('helvetica', 'normal'); doc.setTextColor(...C_TEXTO);
+            y += l.material ? ROW_H + 2 : ROW_H;
         });
     }
 
-    doc.setDrawColor(...C_AZUL_ESC); doc.setLineWidth(0.5); doc.line(ML, y, ML+CW, y); y += 1;
+    doc.setDrawColor(...C_AZUL_ESC); doc.setLineWidth(0.5); doc.line(ML, y, ML + CW, y); y += 1;
     const totais = calcularTotais();
     [
         ['Subtotal Material', totais.subtotalMaterial],
         ['Subtotal Mão de Obra', totais.subtotalMaoObra],
     ].forEach(([label, val]) => {
-        if (y+7>270) { doc.addPage(); y=14; }
-        doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...C_CINZA);
-        doc.text(label, ML+CW-COL_TMAO-30, y+6, { align:'right' });
-        doc.setTextColor(...C_TEXTO); doc.text(formatarMoeda(val), ML+CW-2, y+6, { align:'right' }); y+=6;
+        if (y + 7 > 270) { doc.addPage(); y = 14; }
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(...C_CINZA);
+        doc.text(label, ML + CW - COL_TMAO - 30, y + 6, { align: 'right' });
+        doc.setTextColor(...C_TEXTO); doc.text(formatarMoeda(val), ML + CW - 2, y + 6, { align: 'right' }); y += 6;
     });
     y += 2;
     if (dados.desconto) {
-        if (y+7>270) { doc.addPage(); y=14; }
-        doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(...C_LARANJA);
-        doc.text(`Desconto (${dados.desconto}%)`, ML+CW-COL_TMAO-30, y+6, { align:'right' });
-        doc.text(`- ${formatarMoeda(dados.subtotal * dados.desconto/100)}`, ML+CW-2, y+6, { align:'right' }); y+=7;
+        if (y + 7 > 270) { doc.addPage(); y = 14; }
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(...C_LARANJA);
+        doc.text(`Desconto (${dados.desconto}%)`, ML + CW - COL_TMAO - 30, y + 6, { align: 'right' });
+        doc.text(`- ${formatarMoeda(dados.subtotal * dados.desconto / 100)}`, ML + CW - 2, y + 6, { align: 'right' }); y += 7;
     }
-    if (y+10>270) { doc.addPage(); y=14; }
+    if (y + 10 > 270) { doc.addPage(); y = 14; }
     doc.setFillColor(...C_AZUL_ESC); doc.rect(ML, y, CW, 12, 'F');
-    doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...C_BRANCO);
-    doc.text('TOTAL GERAL', ML+CW-COL_TMAO-30, y+8, { align:'right' });
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(...C_BRANCO);
+    doc.text('TOTAL GERAL', ML + CW - COL_TMAO - 30, y + 8, { align: 'right' });
     doc.setFontSize(13); doc.setTextColor(...C_AZUL_CLA);
-    doc.text(formatarMoeda(dados.totalComDesconto), ML+CW-2, y+8.5, { align:'right' }); y += 16;
+    doc.text(formatarMoeda(dados.totalComDesconto), ML + CW - 2, y + 8.5, { align: 'right' }); y += 16;
 
     if (dados.obs && dados.obs.trim()) {
-        if (y+16>270) { doc.addPage(); y=14; }
-        const obsLinhas = doc.splitTextToSize(dados.obs.trim(), CW-8);
-        const obsH = Math.max(16, obsLinhas.length*5+12);
+        if (y + 16 > 270) { doc.addPage(); y = 14; }
+        const obsLinhas = doc.splitTextToSize(dados.obs.trim(), CW - 8);
+        const obsH = Math.max(16, obsLinhas.length * 5 + 12);
         doc.setFillColor(...C_AZUL_FADE); doc.setDrawColor(...C_AZUL_MED); doc.setLineWidth(0.8);
         doc.rect(ML, y, CW, obsH, 'F');
         doc.setFillColor(...C_AZUL_MED); doc.rect(ML, y, 3, obsH, 'F');
-        doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(...C_AZUL_MED);
-        doc.text('OBSERVAÇÕES', ML+6, y+6);
-        doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(68,68,68);
-        doc.text(obsLinhas, ML+6, y+12); y += obsH+6;
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(7); doc.setTextColor(...C_AZUL_MED);
+        doc.text('OBSERVAÇÕES', ML + 6, y + 6);
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(68, 68, 68);
+        doc.text(obsLinhas, ML + 6, y + 12); y += obsH + 6;
     }
 
-    if (y+10>275) { doc.addPage(); y=14; }
-    doc.setDrawColor(...C_BORDA); doc.setLineWidth(0.3); doc.line(ML, y, ML+CW, y); y+=5;
-    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(...C_CINZA);
+    if (y + 10 > 275) { doc.addPage(); y = 14; }
+    doc.setDrawColor(...C_BORDA); doc.setLineWidth(0.3); doc.line(ML, y, ML + CW, y); y += 5;
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(...C_CINZA);
     doc.text('Confidere Impermeabilizações', ML, y);
-    doc.text(`Orçamento válido até ${validFmt}`, ML+CW, y, { align:'right' });
+    doc.text(`Orçamento válido até ${validFmt}`, ML + CW, y, { align: 'right' });
 
-    const nomeArq = `Orcamento_${numDisplay.replace('#','')}_${(dados.cliente||'cliente').replace(/\s+/g,'_')}.pdf`;
+    const nomeArq = `Orcamento_${numDisplay.replace('#', '')}_${(dados.cliente || 'cliente').replace(/\s+/g, '_')}.pdf`;
     doc.save(nomeArq);
     mostrarToast('PDF gerado com sucesso!', 'sucesso');
 }
 
 function _pdfLogoTexto(doc, ML, C_BRANCO, C_AZUL_CLA) {
-    doc.setFont('helvetica','bold'); doc.setFontSize(22); doc.setTextColor(...C_BRANCO);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(22); doc.setTextColor(...C_BRANCO);
     doc.text('CONFI', ML, 16);
     doc.setTextColor(...C_AZUL_CLA);
     doc.text('DERE', ML + doc.getTextWidth('CONFI'), 16);
-    doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(200,210,225);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(200, 210, 225);
     doc.text('IMPERMEABILIZAÇÕES', ML, 22);
 }
 
@@ -639,7 +639,7 @@ function truncarTexto(doc, texto, maxW) {
     if (!texto) return '';
     if (doc.getTextWidth(texto) <= maxW) return texto;
     let t = texto;
-    while (t.length > 1 && doc.getTextWidth(t + '…') > maxW) { t = t.slice(0,-1); }
+    while (t.length > 1 && doc.getTextWidth(t + '…') > maxW) { t = t.slice(0, -1); }
     return t + '…';
 }
 
