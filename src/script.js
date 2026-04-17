@@ -128,7 +128,7 @@ function adicionarLinha(desc = '', area = '', material = '', custoMaterial = '',
 <td class="col-desc">
 <select onchange="calcularLinha(${id})">
 ${[
-            'BWC(s)', 'Lavabo(s)', 'Sacada(s)', 'Caixa d Água', 'Cisterna', 'Terraço(s)',
+            'BWC(s)', 'BWC Suite', 'Lavabo(s)', 'Sacada(s)', 'Caixa d Água', 'Cisterna', 'Terraço(s)',
             'Janelas Etapa 1', 'Janelas Etapa 2', 'Piscina', 'Piscina Infantil(s)',
             'Piscina Cobertura 1', 'Piscina Cobertura 2', 'Piscina Giardinho 1', 'Piscina Giardinho 2',
             'Rampa Mezanino', 'Teto Cisterna', 'Teto Caixa Da Água', 'Laje Caixa Da Água',
