@@ -1,0 +1,439 @@
+/* ========== INSUMOS / DESPESAS ========== */
+
+.ins-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.2rem;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.ins-filtros {
+  background: var(--branco);
+  border-radius: 12px;
+  box-shadow: var(--sombra);
+  padding: 1rem 1.4rem;
+  margin-bottom: 1.2rem;
+  display: flex;
+  gap: 1rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.ins-filtros .campo {
+  min-width: 140px;
+  flex: 1;
+}
+
+.ins-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ins-card {
+  background: var(--branco);
+  border-radius: 12px;
+  box-shadow: var(--sombra);
+  padding: 1.2rem 1.4rem;
+  border-left: 5px solid #7c5cbf;
+  transition: box-shadow 0.2s;
+}
+
+.ins-card:hover {
+  box-shadow: 0 4px 20px rgba(26, 58, 92, 0.16);
+}
+
+.ins-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.ins-card-titulo {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--preto);
+  margin-bottom: 4px;
+}
+
+.ins-card-meta {
+  font-size: 13px;
+  color: var(--cinza-texto);
+  margin-bottom: 2px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.ins-card-obs {
+  font-size: 12px;
+  color: var(--cinza-texto);
+  font-style: italic;
+  margin-top: 4px;
+}
+
+.ins-card-foto img {
+  margin-top: 8px;
+  max-width: 100%;
+  max-height: 120px;
+  border-radius: 8px;
+  cursor: pointer;
+  object-fit: cover;
+  border: 1px solid var(--cinza-borda);
+}
+
+.ins-card-valor {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.ins-card-valor-label {
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--cinza-texto);
+  font-weight: 600;
+}
+
+.ins-card-valor-num {
+  font-family: 'DM Mono', monospace;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #7c5cbf;
+}
+
+.ins-card-acoes {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+/* Badges por tipo */
+.ins-tipo-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 20px;
+  letter-spacing: 0.3px;
+}
+.ins-tipo-veiculo    { background: #e8f4fd; color: #1565c0; }
+.ins-tipo-trajeto    { background: #e8fdf0; color: #1b5e20; }
+.ins-tipo-material   { background: #fdf3e8; color: #e65100; }
+.ins-tipo-ferramenta { background: #f3e8fd; color: #6a1b9a; }
+
+/* Modal foto grande */
+#modal-foto-insumo {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  z-index: 10000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+#modal-foto-insumo.aberto {
+  display: flex;
+}
+
+#modal-foto-insumo img {
+  max-width: 100%;
+  max-height: 90vh;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+}
+
+#modal-foto-insumo .fechar-foto {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  background: rgba(255,255,255,0.15);
+  border: none;
+  color: #fff;
+  font-size: 1.5rem;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+#modal-foto-insumo .fechar-foto:hover {
+  background: rgba(255,255,255,0.3);
+}
+
+/* Foto preview no modal */
+.ins-foto-preview-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+#ins-foto-preview {
+  max-width: 100%;
+  max-height: 180px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid var(--cinza-borda);
+  display: none;
+}
+
+.btn-foto-upload {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--cinza-quente);
+  border: 1.5px dashed var(--cinza-borda);
+  color: var(--cinza-texto);
+  padding: 10px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.btn-foto-upload:hover {
+  border-color: var(--azul-claro);
+  color: var(--azul-meio);
+}
+
+/* ========== OBRAS ========== */
+
+.obras-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.obras-filtros-bar {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 1.2rem;
+  flex-wrap: wrap;
+}
+
+.obras-filtro-btn {
+  background: var(--branco);
+  border: 1.5px solid var(--cinza-borda);
+  color: var(--cinza-texto);
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.obras-filtro-btn:hover {
+  border-color: var(--azul-claro);
+  color: var(--azul-meio);
+}
+
+.obras-filtro-btn.ativo {
+  background: var(--azul);
+  border-color: var(--azul);
+  color: #fff;
+}
+
+.obras-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.obra-card {
+  background: var(--branco);
+  border-radius: 12px;
+  box-shadow: var(--sombra);
+  padding: 1.2rem 1.4rem;
+  border-left: 5px solid #2e7d32;
+  transition: box-shadow 0.2s;
+}
+
+.obra-card.finalizada {
+  border-left-color: var(--cinza-texto);
+  opacity: 0.8;
+}
+
+.obra-card:hover {
+  box-shadow: 0 4px 20px rgba(26, 58, 92, 0.16);
+}
+
+.obra-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.obra-card-nome {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--preto);
+  margin-bottom: 4px;
+}
+
+.obra-card-meta {
+  font-size: 13px;
+  color: var(--cinza-texto);
+  margin-bottom: 2px;
+}
+
+.obra-status-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.obra-status-badge.execucao   { background: #e8fdf0; color: #2e7d32; }
+.obra-status-badge.finalizada { background: #f5f5f5; color: #757575; }
+
+.obra-card-acoes {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ========== MULTI-FUNCIONÁRIOS NO RELATÓRIO ========== */
+
+.func-check-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--cinza-quente);
+  border: 1.5px solid var(--cinza-borda);
+  border-radius: 10px;
+  padding: 10px 12px;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.func-check-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--preto);
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+
+.func-check-item:hover {
+  background: var(--azul-fade);
+}
+
+.func-check-item input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--azul);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* Select obra no relatório */
+.rel-obra-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Calendário legenda — novo item insumo */
+.cal-legenda-dot.insumo { background: #7c5cbf; }
+.cal-evento.insumo {
+  background: #f3e8fd;
+  color: #6a1b9a;
+  border-left: 3px solid #7c5cbf;
+}
+
+/* ========== RESPONSIVO ========== */
+
+@media (max-width: 768px) {
+  .ins-topo {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .ins-topo button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .ins-filtros {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .ins-filtros .campo {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .ins-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .ins-card-valor {
+    text-align: left;
+  }
+
+  .ins-card-acoes {
+    flex-wrap: wrap;
+  }
+
+  .ins-card-acoes .btn-mini {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .obras-topo {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .obras-topo button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .obra-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .obra-card-acoes .btn-mini {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .obras-filtros-bar {
+    width: 100%;
+  }
+
+  .obras-filtro-btn {
+    flex: 1;
+    text-align: center;
+  }
+}
